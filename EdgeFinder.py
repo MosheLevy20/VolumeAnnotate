@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
-from Annotations import point as Point
+from helpers import Point
 import numpy as np
 import copy
+
+
 
 def findEdges(initialEdge, filenameList):
     """

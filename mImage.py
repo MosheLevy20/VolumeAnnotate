@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
 import copy
-from Annotations import point
+from helpers import Point
 from PIL import Image
 #ModuleNotFoundError: No module named 'PIL'
 #pip3 install pillow
@@ -65,60 +65,6 @@ class mImage(object):
 			#print("showing interpolated")
 			an.show(img, self.annotationRadius)
 	
-	# def interpolate(self):
-	# 	#use bezier curves to interpolate between points in the annotation list
-	# 	for i in range(len(self.annotations)):
-	# 		if len(self.annotations[i]) > 1:
-	# 			interp = self.interpolatePoints(self.annotations[i])
-	# 			#print("interpolating", len(interp))
-	# 			self.interpolated[i] = interp
-	# 		else:
-	# 			pass
-		
-	def interpolatePoints(self, points):
-		#use linear interpolation to interpolate between points in the annotation list
-		points = [[i.x, i.y] for i in points]
-		interp = []
-		for i in range(len(points)-1):
-			#find the distance between the two points
-			dist = np.sqrt((points[i+1][0]-points[i][0])**2 + (points[i+1][1]-points[i][1])**2)
-			#find the number of points to interpolate between them
-			n = int(dist*self.img.shape[0])
-			if n == 0:
-				continue
-			#find the step size
-			step = 1/n
-			#interpolate between the two points
-			for j in np.arange(0,n,3):
-				x = points[i][0] + (points[i+1][0]-points[i][0])*j*step
-				y = points[i][1] + (points[i+1][1]-points[i][1])*j*step
-				interp.append(point(x, y, 0,2))
-		return interp
-	# def interpolatePoints(self, points):
-	# 	points = [[i.x, i.y] for i in points]
-	# 	#use bezier curves to interpolate between points in the annotation list
-	# 	#first find the total length of the curve
-	# 	dists = np.array([(points[i+1][0]-points[i][0])**2 + (points[i+1][1]-points[i][1])**2 for i in range(len(points)-1)])
-	# 	dists = np.sqrt(dists)
-	# 	totalDist = np.sum(dists)*self.display_width
-	# 	dt = 1/totalDist
-	# 	print("total dist", totalDist, dt)
-	# 	bezier = []
-	# 	t = 0
-	# 	while t <=1:
-	# 		newPoints = [i for i in points]
-	# 		while len(newPoints) > 1:
-	# 			temp = newPoints
-	# 			newPoints = []
-	# 			for index, i in enumerate(temp[:-1]):
-	# 				newPoints.append(self.getInterpolated(temp[index:index+2], t))
-	# 		bezier.append(point(newPoints[0][0], newPoints[0][1], (255,0,0),1))
-	# 		t += dt
-	# 	print(len(bezier), len(points), len(points)/dt)
-	# 	return bezier
-	# def getInterpolated(self, points, t):
-	# 	points = np.array(points)
-	# 	return points[0]*(1-t) + points[1]*t
 
 	def get2DImage(self):
 		colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
