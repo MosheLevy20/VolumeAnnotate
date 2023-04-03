@@ -21,8 +21,8 @@ class mImage(object):
 		self.interpolated = [[] for i in range(_frame_count)]
 		self.annotationRadius = 3
 
-		self.contrast = 5
-		self.brightness = 0.01
+		self.contrast = 3
+
 
 	def setImg(self, img):
 		self.img = cv2.imread(img)
@@ -148,8 +148,8 @@ class mImage(object):
 		#img = np.where(img > 20, 255, 0)
 		img = cv2.convertScaleAbs(img)
 		#do the above with cv2
-		img = cv2.threshold(img, 20, 255, cv2.THRESH_BINARY)
-		img = img[1]
+		# img = cv2.threshold(img, 20, 255, cv2.THRESH_BINARY)
+		# img = img[1]
 		
 
 		return img

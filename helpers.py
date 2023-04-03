@@ -13,28 +13,28 @@ from PyQt5.QtCore import *
 
 #point annotation object
 class Point(object):
-    def __init__(self, x, y, colorIdx=0, size=3):
-        self.colorIdx = colorIdx
-        color = getColor(colorIdx)
-        self.x = x
-        self.y = y
-     
-        self.color = color
-        self.size = size
+	def __init__(self, x, y, colorIdx=0, size=3):
+		self.colorIdx = colorIdx
+		color = getColor(colorIdx)
+		self.x = x
+		self.y = y
+	 
+		self.color = color
+		self.size = size
 
-    def show(self, arr, size=3):
-        #draws point to copy of the current frame
-        x = int(self.x*arr.shape[0])
-        y = int(self.y*arr.shape[1])
-        cv2.circle(arr, (x,y), size, self.color, -1)
-    
-    def updateColor(self, colorIdx):
-        self.colorIdx = colorIdx
-        self.color = getColor(colorIdx)
+	def show(self, arr, size=3):
+		#draws point to copy of the current frame
+		x = int(self.x*arr.shape[0])
+		y = int(self.y*arr.shape[1])
+		cv2.circle(arr, (x,y), size, self.color, -1)
+	
+	def updateColor(self, colorIdx):
+		self.colorIdx = colorIdx
+		self.color = getColor(colorIdx)
 
 def getColor(colorIdx):
-    colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
-    return colors[colorIdx]
+	colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
+	return colors[colorIdx]
 
 
 def interpolatePoints(points, imShape):
@@ -57,17 +57,21 @@ def interpolatePoints(points, imShape):
 				interp.append(Point(x, y, 0,2))
 		return interp
 
-    
+	
 def getRelCoords(app, pos):
-    label_pos = app.label.pos()
-    image_rect = app.label.pixmap().rect()
-    image_pos = QPoint(int(label_pos.x() + (app.label.width() - image_rect.width()) / 2),int(label_pos.y() + (app.label.height() - image_rect.height()) / 2))
-    print(f"image pos: {image_pos.x()}, {image_pos.y()}")
-    #get pos relative to image 
-    pos = pos - image_pos
+	pos = getUnscaledRelCoords(app, pos)
+	image_rect = app.label.pixmap().rect()
+	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
+	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
+	x /= image_rect.height()
+	y /= image_rect.width()
+	return x,y
 
-    x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
-    y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
-    x /= image_rect.height()
-    y /= image_rect.width()
-    return x,y
+def getUnscaledRelCoords(app, pos):
+	label_pos = app.label.pos()
+	image_rect = app.label.pixmap().rect()
+	image_pos = QPoint(int(label_pos.x() + (app.label.width() - image_rect.width()) / 2),int(label_pos.y() + (app.label.height() - image_rect.height()) / 2))
+	print(f"image pos: {image_pos.x()}, {image_pos.y()}")
+	#get pos relative to image 
+	pos = pos - image_pos
+	return pos
