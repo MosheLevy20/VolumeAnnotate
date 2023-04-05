@@ -31,6 +31,7 @@ Next is the mouse menu:
 1. Pan (WASD). This is the default, it allows you to move around the image when zoomed in, you can also pan using the 'W','A','S','D' keys.
 2. Outline Fragment. This allows you to outline the surface of a fragment by clicking on a series of points, as shown in the image below
 ![outline fragment](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/outlinefragment.png)
-4. Move
+3. Move Points. Allows you to move already placed points.
+4. Delete Points. Dele
 
 
