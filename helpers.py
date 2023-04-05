@@ -21,8 +21,37 @@ class Point(object):
 	 
 		self.color = color
 		self.size = size
+	
+	def __add__(self, other):
+		return Point(self.x+other.x, self.y+other.y)
+	
+	def __sub__(self, other):
+		return Point(self.x-other.x, self.y-other.y)
+	
+	def __mul__(self, scalar):
+		return Point(self.x*scalar, self.y*scalar)
 
-	def show(self, arr, size=3):
+	#subscripting
+	def __getitem__(self, key):
+		if key == 0:
+			return self.x
+		elif key == 1:
+			return self.y
+		else:
+			raise IndexError("Point index out of range")
+	
+	def __setitem__(self, key, value):
+		if key == 0:
+			self.x = value
+		elif key == 1:
+			self.y = value
+		else:
+			raise IndexError("Point index out of range")
+
+
+	def show(self, arr, size, node):
+		if node:
+			size *= 2
 		#draws point to copy of the current frame
 		x = int(self.x*arr.shape[0])
 		y = int(self.y*arr.shape[1])
@@ -71,7 +100,6 @@ def getUnscaledRelCoords(app, pos):
 	label_pos = app.label.pos()
 	image_rect = app.label.pixmap().rect()
 	image_pos = QPoint(int(label_pos.x() + (app.label.width() - image_rect.width()) / 2),int(label_pos.y() + (app.label.height() - image_rect.height()) / 2))
-	print(f"image pos: {image_pos.x()}, {image_pos.y()}")
 	#get pos relative to image 
 	pos = pos - image_pos
 	return pos

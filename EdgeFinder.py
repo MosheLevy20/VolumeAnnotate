@@ -4,9 +4,7 @@ from helpers import Point
 import numpy as np
 import copy
 
-
-
-def findEdges(initialEdge, filenameList):
+def findEdges(initialEdge, filenameList, radius):
     """
     Given an initial edge in the form of a list of points and a list of filenames, returns a modified list of edge points for each image that lies on the edge.
 
@@ -75,20 +73,17 @@ def findEdges(initialEdge, filenameList):
 
         r = int(len(currentEdge)/len(prevEdge))
         last = currentEdge[-1]
-        print(f"r1 = {r}")
-        bez = interpolatePoints(currentEdge[::r], currentImage.shape[1])
+
+        bez = bezier(currentEdge[::r], currentImage.shape[1])
         r = len(bez)/len(prevEdge)
-        print(f"r2 = {r}")
         #ceiling function
         r = int(r) + (r > int(r))
-        # Store the current edge in the list of edges
-        allEdges.append(bez[::r].append(last))
-
-        #allEdges.append(currentEdge[::r])
-
+        bez = bez[::r]
+        bez.append(last)
+        allEdges.append(bez)
     return allEdges
 
-def interpolatePoints(points, display_width):
+def bezier(points, display_width):
     points = [[i.x, i.y] for i in points]
     #use bezier curves to interpolate between points in the annotation list
     #first find the total length of the curve
@@ -114,3 +109,5 @@ def interpolatePoints(points, display_width):
 def getInterpolated(points, t):
     points = np.array(points)
     return points[0]*(1-t) + points[1]*t
+
+

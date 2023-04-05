@@ -1,17 +1,22 @@
 import os
 from mImage import mImage
-from EdgeFinder import findEdges
 from helpers import *
 from eventHandlers import *
 
 #TODO:
-#ink detection upper lower thresholds, button for inverting image
-#annotate vs pure unwrap mode
-#fix bug with higher resolution images (ink detection is not working)
+#still issue with clicking outside of image
+#improve efficiency, maybe by loading more than one image into memory at a time
+#on startup choose folder
+#resize nodes
+#x and y in point is 0, 1 unlike everywhere else
 #add ability to change color of annotation, drop down menu (helpful for discovering which features matter)
 #fix edge finder
 #add measuring tool
+#image obj parameter initialization should be controlled from main app init
+#add "else's" everywhere, good practice even if never called
+#autosave more places
 
+#rearrange layout, and add more text
 
 #less important aesthetic things
 #resolution, i.e. interpolation density
@@ -21,7 +26,7 @@ from eventHandlers import *
 
 
 
-#unique session id includingtimestamp
+#unique session id including timestamp, for autosaving progress
 sessionId = time.strftime("%Y%m%d-%H%M%S")+"autosave.pkl"
 
 def load_tif(path):
@@ -48,7 +53,6 @@ class App(QWidget):
         self._frame_list = load_tif("../../campfire/rec/")
         #self._frame_list = load_tif("../../scroll1-1cm/")
         #self._frame_list = load_tif("../../scroll1-1cm-cropped/")
-        #self._frame_list = load_tif("zIntImages/")
         #set grid layout
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -57,7 +61,7 @@ class App(QWidget):
         self._frame_count = len(self._frame_list)
         #add text for frame number, non editable
         self.frame_number = QLabel(self)
-        self.frame_number.setText(f"Slice {self._frame_index+1}/{self._frame_count}")
+        self.frame_number.setText(f"Frame {self._frame_index+1}/{self._frame_count}")
   
         self.image = mImage(self._frame_list[0], len(self._frame_list))
 
@@ -67,26 +71,24 @@ class App(QWidget):
         ###################### Buttons and other widgets #######################
         ########################################################################
 
-        self.button_reset = QPushButton('Reset', self)
-    
-        self.button_reset.clicked.connect(self.EH.on_reset)
+       
 
-        self.button_zoom_in = QPushButton('Zoom In (Up Key)', self)
+        self.button_zoom_in = QPushButton('Zoom In (\u2191)', self)
         self.button_zoom_in.clicked.connect(self.EH.on_zoom_in)
 
-        self.button_zoom_out = QPushButton('Zoom Out (Down Key)', self) 
+        self.button_zoom_out = QPushButton('Zoom Out (\u2193)', self)
         self.button_zoom_out.clicked.connect(self.EH.on_zoom_out)
 
-        self.button_next_frame = QPushButton('Next Frame (Right Key)', self) 
+        self.button_next_frame = QPushButton('Next Frame (\u2192)', self) 
         #self.button_next_frame.clicked.connect(on_next_frame)
         self.button_next_frame.clicked.connect(self.EH.on_next_frame)
         
 
-        self.button_previous_frame = QPushButton('Previous Frame (Left Key)', self)
+        self.button_previous_frame = QPushButton('Previous Frame (\u2190)', self)
         self.button_previous_frame.clicked.connect(self.EH.on_previous_frame)
 
         #copy previous frame annotations
-        self.button_copy = QPushButton('Copy Previous Frame', self)
+        self.button_copy = QPushButton('Copy Prev. Frame', self)
         self.button_copy.clicked.connect(self.EH.on_copy)
 
         #save annotations
@@ -97,7 +99,7 @@ class App(QWidget):
         self.button_load.clicked.connect(self.EH.on_load)
 
         #save as 2d mask
-        self.button_save_2D = QPushButton('Save 2D', self)
+        self.button_save_2D = QPushButton('Save 2D Projection', self)
         self.button_save_2D.clicked.connect(self.EH.on_save_2D)
 
         #button that finds ink based on threshold
@@ -119,8 +121,8 @@ class App(QWidget):
         self.show_annotations = True
 
         #display mouse coordinates
-        self.mouse_coordinates = QLabel(self)
-        self.mouse_coordinates.setText("Mouse Coordinates: ")
+        # self.mouse_coordinates = QLabel(self)
+        # self.mouse_coordinates.setText("Mouse Coordinates: ")
 
         #slider for radius of ink detection
         self.slider_ink_radius = QSlider(Qt.Horizontal, self)
@@ -145,6 +147,11 @@ class App(QWidget):
         #change contrast when slider is changed
         self.slider_contrast.valueChanged.connect(self.EH.on_slider_contrast_change)
 
+        #button to invert image
+        self.button_invert = QPushButton('Invert Image', self)
+        self.button_invert.clicked.connect(self.EH.on_invert)
+
+
         #edge detection for the next n frames
         self.button_edge = QPushButton('Edge Detection', self)
         self.button_edge.clicked.connect(self.EH.on_edge)
@@ -167,9 +174,8 @@ class App(QWidget):
         self.mouseModeLayout.addWidget(QRadioButton("Outline Fragment"))
         self.mouseModeLayout.addWidget(QRadioButton("Move Points"))
         self.mouseModeLayout.addWidget(QRadioButton("Delete Points"))
-        self.mouseModeLayout.addWidget(QRadioButton("Label Ink"))
-        
-        
+        self.mouseModeLayout.addWidget(QRadioButton("Annotate"))
+    
         self.mouseModeGroup.addButton(self.mouseModeLayout.itemAt(0).widget(), 0)
         self.mouseModeGroup.addButton(self.mouseModeLayout.itemAt(1).widget(), 1)
         self.mouseModeGroup.addButton(self.mouseModeLayout.itemAt(2).widget(), 2)
@@ -177,6 +183,45 @@ class App(QWidget):
         self.mouseModeGroup.addButton(self.mouseModeLayout.itemAt(4).widget(), 4)
         self.mouseModeGroup.button(0).setChecked(True)
         self.mouseMode = "Pan"
+
+        #create menu for unwrap style
+        self.unwrapStyleGroup = QButtonGroup()
+        self.unwrapStyleGroup.setExclusive(True)
+        self.unwrapStyleGroup.buttonClicked[int].connect(self.EH.on_unwrap_style)
+        self.unwrapStyleWidget = QWidget()
+        self.unwrapStyleLayout = QVBoxLayout()
+        self.unwrapStyleWidget.setLayout(self.unwrapStyleLayout)
+        self.unwrapStyleLayout.addWidget(QRadioButton("Annotations"))
+        self.unwrapStyleLayout.addWidget(QRadioButton("Pure Projection"))
+   
+        self.unwrapStyleGroup.addButton(self.unwrapStyleLayout.itemAt(0).widget(), 0)
+        self.unwrapStyleGroup.addButton(self.unwrapStyleLayout.itemAt(1).widget(), 1)
+   
+        self.unwrapStyleGroup.button(0).setChecked(True)
+        self.unwrapStyle = "Annotate" 
+
+
+        #create dropdown menu for annotation color using a QComboBox
+        self.annotationColorMenu = QComboBox(self)
+
+        #add options to the dropdown menu [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
+        self.annotationColorMenu.addItem("Red", QColor(255, 0, 0))
+        self.annotationColorMenu.addItem("Green", QColor(0, 255, 0))
+        self.annotationColorMenu.addItem("Blue", QColor(0, 0, 255))
+        self.annotationColorMenu.addItem("Yellow", QColor(255, 255, 0))
+        self.annotationColorMenu.addItem("Magenta", QColor(255, 0, 255))
+        self.annotationColorMenu.addItem("Cyan", QColor(0, 255, 255))
+        self.annotationColorMenu.currentIndexChanged[int].connect(self.EH.on_annotation_color_change)
+        self.annotationColorIdx = 1
+        #set initial color to green
+        self.annotationColorMenu.setCurrentIndex(1)
+    
+
+
+
+
+
+        
 
 
 
@@ -188,53 +233,73 @@ class App(QWidget):
         self.label.setPixmap(self.image.getImg(0))
         #self.layout.rowStretch(2)#didn't work, try: 
         self.layout.addWidget(self.label, 0, 0, 30,1)
-        self.layout.addWidget(self.button_zoom_in, 2, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_zoom_in, 3, 2, Qt.AlignTop)
         #the parameters are: row, column, rowspan, colspan, alignment
-        self.layout.addWidget(self.button_zoom_out, 2, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_next_frame, 1, 2, Qt.AlignTop)
-        self.layout.addWidget(self.button_previous_frame, 1, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_reset, 5,2, Qt.AlignTop)
-        self.layout.addWidget(self.frame_number, 3, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_zoom_out, 3, 1, Qt.AlignTop)
+        self.layout.addWidget(self.button_next_frame, 1, 2, 1,1, Qt.AlignTop)
+        self.layout.addWidget(self.button_previous_frame, 1, 1,1,1, Qt.AlignTop)
+
+        self.layout.addWidget(self.frame_number, 2, 1,1,2, Qt.AlignCenter)
         #add black horizontal line
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
         self.layout.addWidget(hline, 4, 1, 1, 3)
+    
+        self.layout.addWidget(self.mouseModeWidget, 4, 1, 5,1)
 
-        self.layout.addWidget(self.button_copy, 7, 2, Qt.AlignTop)
-
-        self.layout.addWidget(self.mouseModeWidget, 5, 1, 3,1)
+        #add text "Annotation Color"
+        self.layout.addWidget(QLabel("Annotation Color:"), 6, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.annotationColorMenu, 7, 2, 1, 1)
 
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
         self.layout.addWidget(hline, 8, 1, 1, 3)
+        
 
-        self.layout.addWidget(self.button_save, 9, 2, Qt.AlignTop)
-        self.layout.addWidget(self.button_load, 9, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_save_2D, 10, 2, Qt.AlignTop)
-        self.layout.addWidget(self.button_ink, 10, 1, Qt.AlignTop)
-
-        self.layout.addWidget(QLabel("Ink Threshold"), 11, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider, 12, 1, 1, 2)
-        self.layout.addWidget(self.button_show_annotations, 13, 1, 1, 2)
-        self.layout.addWidget(self.mouse_coordinates, 14, 1, 1, 2)
+        self.layout.addWidget(QLabel("Ink Threshold"), 9, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider, 9, 2, 1, 1)
 
 
-        self.layout.addWidget(QLabel("Ink Radius"), 15, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_ink_radius, 16, 1, 1, 2)
+
+        self.layout.addWidget(QLabel("Ink Radius"), 10, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_ink_radius, 10, 2, 1, 1)
         self.inkRadius = 3
 
-        self.layout.addWidget(QLabel("Annotation Radius"), 17, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_annotation_radius, 18, 1, 1, 2)
+        self.layout.addWidget(QLabel("Annotation Radius"), 11, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_annotation_radius, 11, 2, 1, 1)
 
-        self.layout.addWidget(QLabel("Contrast"), 19, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_contrast, 20, 1, 1, 2)
+        self.layout.addWidget(QLabel("Contrast"), 12, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_contrast, 12, 2, 1, 1)
 
-        self.layout.addWidget(self.button_edge, 21, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_ink, 13, 1, Qt.AlignTop)
+        self.layout.addWidget(self.button_show_annotations, 13, 2, 1, 1)
 
-        self.layout.addWidget(QLabel("Edge Threshold"), 21, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_edge, 22, 1, 1, 2)
+        self.layout.addWidget(self.button_invert, 14, 1, Qt.AlignTop)
+        self.layout.addWidget(self.button_copy, 14, 2, Qt.AlignTop)
 
-        self.labelingColorIdx = 1
+        self.layout.addWidget(self.button_edge, 17, 1,1,2, Qt.AlignTop)
+
+        self.layout.addWidget(QLabel("Edge Detection: Number of Slices"), 15, 1,1,2, Qt.AlignCenter)
+        self.layout.addWidget(self.slider_edge, 16, 1, 1, 2)
+
+        #hline
+        hline = QFrame()
+        hline.setFrameShape(QFrame.HLine)
+        self.layout.addWidget(hline, 18, 1, 1, 3)
+
+        
+
+        
+
+        self.layout.addWidget(self.button_save, 20, 1,1,2, Qt.AlignCenter)
+        self.layout.addWidget(self.button_load, 21, 1, 1, 2, Qt.AlignCenter)
+        
+        #add text "Projection Style"
+        self.layout.addWidget(QLabel("Projection Style:"), 22, 1, Qt.AlignCenter)
+        self.layout.addWidget(self.unwrapStyleWidget, 22, 2, 1,1)
+        self.layout.addWidget(self.button_save_2D, 23, 1,1,2, Qt.AlignCenter)
+
+        
 
         self.panLen = self.image.getImg(self._frame_index).width()/5
 
@@ -253,6 +318,8 @@ class App(QWidget):
         
         self.clickState = 0
 
+        
+
 
         self.timer = QTimer(self)
         # Set the time interval to 20 milliseconds (50 times per second)
@@ -268,7 +335,6 @@ class App(QWidget):
     def update_ink(self, index = None):
         if index is None:
             index = self._frame_index
-        print(self._frame_list[index], index,'this')
         
         #iterate through all interpolated points and find the average value of the image in a nxn window around the point
         #if the average value is greater than the threshold, then it's ink
@@ -281,10 +347,9 @@ class App(QWidget):
         #loop through all points
         for i in range(len(points)):
             #get the x and y coordinates of the point
-            x = points[i].x*img.shape[1]
-            y = points[i].y*img.shape[0]
-            if i == 0:
-                print(f"first point: {x}, {y}")
+            x = points[i].x*img.shape[0]
+            y = points[i].y*img.shape[1]
+           
             #get the average value of the image in a nxn window around the point
             region = img[int(y-n):int(y+n), int(x-n):int(x+n)]
             #get the 90th percentile of the region
@@ -295,27 +360,24 @@ class App(QWidget):
                 avg = np.min(region)
             #print(avg, self.inkThreshold)
             #if the average value is greater than the threshold, then it's ink
-            if avg < self.inkThreshold:
-                points[i].updateColor(1)
+            inkIdx = 1
+            if self.image.invert:
+                inkIdx = 0
+            if avg > self.inkThreshold:
+                points[i].updateColor(inkIdx)
             else:
-                points[i].updateColor(0)
+                points[i].updateColor(1-inkIdx)
 
             
     def _update_frame(self):
         self.image.setImg(self._frame_list[self._frame_index])
-        self.frame_number.setText(f"Slice {self._frame_index+1}/{self._frame_count}")
+        self.frame_number.setText(f"Frame: {self._frame_index+1}/{self._frame_count}")
         self._update_image()
         
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
         #self.image.showAnnotations(pmap, self._frame_index)
         self.label.setPixmap(pmap)
-    
-    #every time step, update the image
-    def onTimer(self):
-        self._update_frame()
-        print(f"time: {time.time()}")
-
 
     def keyPressEvent(self, event):
         return self.EH.keyPressEvent(event)

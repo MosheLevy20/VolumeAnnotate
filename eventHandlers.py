@@ -1,5 +1,7 @@
 from helpers import *
 import os
+from EdgeFinder import findEdges
+
 class EventHandler(object):
     def __init__(self, app):
         self.app = app
@@ -16,8 +18,15 @@ class EventHandler(object):
             self.app.mouseMode = "Delete Points"
         elif id == 4:
             self.app.mouseMode = "Label Ink"
-            
-        #print(self.app.mouseMode)
+     
+    def on_unwrap_style(self, id):
+        if id == 0:
+            self.app.unwrapStyle = "Annotate"
+        elif id == 1:
+            self.app.unwrapStyle = "Project"
+    
+    def on_annotation_color_change(self, id):
+        self.app.annotationColorIdx = id
 
     def on_zoom_in(self, event):
         self.app.image.zoom(1/1.1)
@@ -27,8 +36,6 @@ class EventHandler(object):
         self.app.image.zoom(1.1)
         
 
-    def on_reset(self, event):
-        self.app.image.reset()
         
 
     def on_next_frame(self, event):
@@ -70,7 +77,7 @@ class EventHandler(object):
                 
 
     def on_save_2D(self, event):
-        image2D = self.app.image.get2DImage()
+        image2D = self.app.image.get2DImage(self.app)
         filename = QFileDialog.getSaveFileName(self.app, 'Save File', os.getcwd(), "PNG Files (*.png)")
         if filename[0] != '':
             #use cv2 to save image
@@ -106,29 +113,29 @@ class EventHandler(object):
                 
     def on_slider_contrast_change(self, event):
         self.app.image.contrast = self.app.slider_contrast.value()
+    
+    def on_invert(self, event):
+        self.app.image.invert = not self.app.image.invert
         
-
-
 
     def on_edge(self, event):
         #get the list of image names
         imageNames = self.app._frame_list[self.app._frame_index:self.app._frame_index+self.app.edgeDepth]
         #use findEdges to get the list of edges
-        edges = findEdges(self.app.image.interpolated[self.app._frame_index], imageNames)
-        print(len(edges), self.app.edgeDepth)
+        edges = findEdges(self.app.image.annotations[self.app._frame_index], imageNames, self.app.inkRadius)
+        #print(len(edges), self.app.edgeDepth)
         #add the edges as the annotations for the next edgeDepth frames
         for i in range(1,self.app.edgeDepth):
             #print(edges[i])
-            print([j.x,j.y] for j in edges[i])
+            #print([j.x,j.y] for j in edges[i])
             #annotations is every n'th entry in interpolated, use slice notation
-            self.app.image.annotations[self.app._frame_index+i] = edges[i][::5]
-            self.app.image.interpolated[self.app._frame_index+i] = interpolatePoints(edges[i][::5], self.app.image.img.shape)
-            print("updating ink")
+            self.app.image.annotations[self.app._frame_index+i] = edges[i]
+            self.app.image.interpolated[self.app._frame_index+i] = interpolatePoints(edges[i], self.app.image.img.shape)
+
         for i in range(1,self.app.edgeDepth):   
             self.app.update_ink(self.app._frame_index+i)
         #run ink detection on the new annotations
-        
-        
+                
 
     def on_slider_edge_change(self, event):
         self.app.edgeDepth = self.app.slider_edge.value()
@@ -166,27 +173,26 @@ class EventHandler(object):
             self.app.image.annotations[self.app._frame_index] = copy.deepcopy(self.app.image.annotations[self.app._frame_index-1])
             self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)
             #
-            with open(sessionId, 'wb') as f:
+            with open(self.app.sessionId, 'wb') as f:
                 pickle.dump(self.app.image.annotations, f)
                 pickle.dump(self.app.image.interpolated, f)
                 pickle.dump(self.app.image.img.shape, f)
 
         
-
     def mousePressEvent(self, event):
         #check if the mouse is out of the image
         # if event.pos().x() > self.app.image.img.shape[1]*self.app.image.scale or event.pos().y() > self.app.image.img.shape[0]*self.app.image.scale:
         #     return
 
         self.app.clickState = 1
-        print(f"mouse pressed at {event.pos().x()}, {event.pos().y()}")
+        # print(f"mouse pressed at {event.pos().x()}, {event.pos().y()}")
 
         x,y = getRelCoords(self.app,event.pos())
         if x < 0 or y < 0 or x > 1 or y > 1:
             return
-        print(f"rel coords: {x}, {y}")
-        #print image coordinates
-        print(f"image coords: {x*self.app.image.img.shape[1]}, {y*self.app.image.img.shape[0]}")
+        # print(f"rel coords: {x}, {y}")
+        # #print image coordinates
+        # print(f"image coords: {x*self.app.image.img.shape[1]}, {y*self.app.image.img.shape[0]}")
 
         if self.app.mouseMode == "Outline Fragment":
             self.app.image.annotations[self.app._frame_index].append(Point(x,y))
@@ -207,7 +213,7 @@ class EventHandler(object):
             closestDist = np.linalg.norm(np.array([closest.x,closest.y])-np.array([x,y]))
             #print(closestDist, "closest dist")
             if closestDist < 0.01:
-                self.app.image.interpolated[self.app._frame_index][closestIndex].updateColor(self.app.labelingColorIdx)
+                self.app.image.interpolated[self.app._frame_index][closestIndex].updateColor(self.app.annotationColorIdx)
 
         elif self.app.mouseMode == "Move Points":
             if len(self.app.image.annotations[self.app._frame_index]) == 0:
@@ -248,9 +254,6 @@ class EventHandler(object):
                 self.app.image.annotations[self.app._frame_index].pop(closestIndex)
                 self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)
 
-            
-            
-        
 
     #on mouse release, stop dragging
     def mouseReleaseEvent(self, event):
@@ -260,13 +263,9 @@ class EventHandler(object):
         
 
     def mouseMoveEvent(self, event):
-        
-        #print pos of pixmap
-
-
         x,y = getRelCoords(self.app, event.pos())
         
-        self.app.mouse_coordinates.setText(f"Mouse Coordinates: {x:.3f}, {y:.3f}, event: {event.pos().x()}, {event.pos().y()}")
+        # self.app.mouse_coordinates.setText(f"Mouse Coordinates: {x:.3f}, {y:.3f}, event: {event.pos().x()}, {event.pos().y()}")
         if self.app.mouseMode == "Move Points":
             if self.app.dragging:
                 self.app.image.annotations[self.app.draggingFrame][self.app.draggingIndex].x = x-self.app.draggingOffset[0]
@@ -289,17 +288,17 @@ class EventHandler(object):
                 closestDist = np.linalg.norm(np.array([closest.x,closest.y])-np.array([x,y]))
                 #print(closestDist, "closest dist")
                 if closestDist < 0.01:
-                    self.app.image.interpolated[self.app._frame_index][closestIndex].updateColor(self.app.labelingColorIdx)
+                    self.app.image.interpolated[self.app._frame_index][closestIndex].updateColor(self.app.annotationColorIdx)
         
         elif self.app.mouseMode == "Pan":
             if self.app.panning:
-                #self.app.image.offset should be updated
-                x,y = self.app.panStart.x(), self.app.panStart.y()
-                # X,Y = getRelCoords(self.app, event.pos())
-                # X *= self.app.image.img.shape[1]
-                # Y *= self.app.image.img.shape[0]
                 pos = getUnscaledRelCoords(self.app, event.pos())
-                X,Y = pos.x(), pos.y()
-                deltax = (x - X)
-                deltay = (y - Y)
-                self.app.image.offset = (deltay+self.app.panStartCoords[0], deltax+self.app.panStartCoords[1])
+                image_rect = self.app.label.pixmap().rect()
+                #divide pos.x by image_rect.width() 
+                #divide pos.y by image_rect.height()
+                
+                delta = self.app.panStart - pos
+                #delta = delta * self.app.image.scale
+                self.app.image.pan(np.array([delta.y()*self.app.pixelSize0, delta.x()*self.app.pixelSize0]))
+                self.app.panStart = pos
+                self.app.panStartCoords = self.app.image.offset
