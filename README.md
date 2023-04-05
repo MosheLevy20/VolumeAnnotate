@@ -25,7 +25,7 @@ If everything worked as it's supposed to, you should see a popup asking for the 
 
 There are four sections to the control panel.
 ### First Section
-Here are the basic buttons for scrubbing between frames, as well as zooming (these can be controlled with the arrow keys. 
+Here are the basic buttons for scrubbing between frames, as well as zooming (these can also be controlled with the arrow keys). 
 ### Second Section
 Next is the mouse menu:
 1. Pan (WASD). This is the default, it allows you to move around the image when zoomed in, you can also pan using the 'W','A','S','D' keys.
