@@ -43,7 +43,7 @@ The "Annotation Radius" slider and "Hide Annotations" button are just for visual
 
 The "Find Ink" button applies the threshold to the current frame only. 
 
-The "Copy Previous Frame" button duplicates the points and annoations from the previous frame to make manual segmentation easier.
+The "Copy Previous Frame" button duplicates the points and annotations from the previous frame to make manual segmentation easier.
 
 The "Edge Detection" button takes the current frame's points and tries to adjust their positions in the next N frames (where N is specified by the slider) to keep them along the edge you outlined. It also automatically applies the ink detection to all the frames it went through. (This is still a work in progress, so you will probably need to manually adjust the points if the algorithm gets it wrong).
 
@@ -51,7 +51,7 @@ The "Edge Detection" button takes the current frame's points and tries to adjust
 ### Fourth Section
 Here you can save and load annotations (if the app crashes you can load the most recent autosave).
 
-Finally, you can use the "Save 2D Projection" button to virtually unwrap your annotations (including the automatically detected ink). There are two options here: "Annotations" just unwraps your annotations, while "Pure Projection" simply takes the pixel values of the points (including the interpolated ones) that you onlined, ignoring the color of your annotations. Below is an example of a virtual unwrapping using both options.
+Finally, you can use the "Save 2D Projection" button to virtually unwrap your annotations (including the automatically detected ink). There are two options here: "Annotations" just unwraps your annotations, while "Pure Projection" simply takes the pixel values of the points (including the interpolated ones) that you outlined, ignoring the color of your annotations. Below is an example of a virtual unwrapping of the campfire scroll using both options.
 
 ![Annotations](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/manualAnn.png)
 ![Pure Projection](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/ManualPure.png)
