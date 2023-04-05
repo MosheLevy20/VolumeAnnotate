@@ -119,7 +119,7 @@ class EventHandler(object):
 
     def on_edge(self, event):
         #get the list of image names
-        imageNames = self.app._frame_list[self.app._frame_index:self.app._frame_index+self.app.edgeDepth]
+        imageNames = self.app._frame_list[self.app._frame_index:min(self.app._frame_index+self.app.edgeDepth, self.app._frame_count)]
         #use findEdges to get the list of edges
         edges = findEdges(self.app.image.annotations[self.app._frame_index], imageNames, self.app.inkRadius)
       
