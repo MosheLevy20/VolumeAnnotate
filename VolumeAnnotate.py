@@ -36,9 +36,6 @@ class App(QWidget):
         
         self._frame_list = load_tif(folder)
         
-        #self._frame_list = load_tif("../../campfire/rec/")
-        #self._frame_list = load_tif("../../scroll1-1cm/")
-        #self._frame_list = load_tif("../../scroll1-1cm-cropped/")
         #set grid layout
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -200,14 +197,6 @@ class App(QWidget):
         self.annotationColorIdx = 1
         #set initial color to green
         self.annotationColorMenu.setCurrentIndex(1)
-    
-
-
-
-
-
-        
-
 
 
         ########################################################################
@@ -272,9 +261,6 @@ class App(QWidget):
         hline.setFrameShape(QFrame.HLine)
         self.layout.addWidget(hline, 18, 1, 1, 3)
 
-        
-
-        
 
         self.layout.addWidget(self.button_save, 20, 1,1,2, Qt.AlignCenter)
         self.layout.addWidget(self.button_load, 21, 1, 1, 2, Qt.AlignCenter)
@@ -304,8 +290,6 @@ class App(QWidget):
         self.clickState = 0
 
         
-
-
         self.timer = QTimer(self)
         # Set the time interval to 20 milliseconds (50 times per second)
         self.timer.setInterval(20)
@@ -314,15 +298,12 @@ class App(QWidget):
         # Start the timer
         self.timer.start()
 
-        
     
 
     def update_ink(self, index = None):
         if index is None:
             index = self._frame_index
         
-        #iterate through all interpolated points and find the average value of the image in a nxn window around the point
-        #if the average value is greater than the threshold, then it's ink
         n = self.inkRadius
         #get the image
        
@@ -339,16 +320,17 @@ class App(QWidget):
             region = img[int(y-n):int(y+n), int(x-n):int(x+n)]
             #get the 90th percentile of the region
             if region.size == 0:
-                avg = 0
+                val = 0
             else:
-                #avg = np.percentile(region, 10)
-                avg = np.min(region)
-            #print(avg, self.inkThreshold)
+                if self.image.invert:
+                    val = np.min(region)
+                else:
+                    val = np.max(region)
             #if the average value is greater than the threshold, then it's ink
             inkIdx = 1
             if self.image.invert:
                 inkIdx = 0
-            if avg > self.inkThreshold:
+            if val > self.inkThreshold:
                 points[i].updateColor(inkIdx)
             else:
                 points[i].updateColor(1-inkIdx)

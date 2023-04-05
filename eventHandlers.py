@@ -122,18 +122,16 @@ class EventHandler(object):
         imageNames = self.app._frame_list[self.app._frame_index:self.app._frame_index+self.app.edgeDepth]
         #use findEdges to get the list of edges
         edges = findEdges(self.app.image.annotations[self.app._frame_index], imageNames, self.app.inkRadius)
-        #print(len(edges), self.app.edgeDepth)
+      
         #add the edges as the annotations for the next edgeDepth frames
         for i in range(1,self.app.edgeDepth):
-            #print(edges[i])
-            #print([j.x,j.y] for j in edges[i])
             #annotations is every n'th entry in interpolated, use slice notation
             self.app.image.annotations[self.app._frame_index+i] = edges[i]
             self.app.image.interpolated[self.app._frame_index+i] = interpolatePoints(edges[i], self.app.image.img.shape)
 
+        #run ink detection on the new annotations
         for i in range(1,self.app.edgeDepth):   
             self.app.update_ink(self.app._frame_index+i)
-        #run ink detection on the new annotations
         
         autoSave(self.app)
 
@@ -181,19 +179,14 @@ class EventHandler(object):
             print("Warning: Unrecognized key press")
         
     def mousePressEvent(self, event):
-        #check if the mouse is out of the image
-        # if event.pos().x() > self.app.image.img.shape[1]*self.app.image.scale or event.pos().y() > self.app.image.img.shape[0]*self.app.image.scale:
-        #     return
-
         self.app.clickState = 1
-        # print(f"mouse pressed at {event.pos().x()}, {event.pos().y()}")
 
         x,y = getRelCoords(self.app,event.pos())
+        #check if the mouse is out of the image
         if x < 0 or y < 0 or x > 1 or y > 1:
             return
         print(f"rel coords: {x}, {y}")
-        # #print image coordinates
-        # print(f"image coords: {x*self.app.image.img.shape[1]}, {y*self.app.image.img.shape[0]}")
+        
 
         if self.app.mouseMode == "Outline Fragment":
             self.app.image.annotations[self.app._frame_index].append(Point(x,y))
@@ -212,7 +205,7 @@ class EventHandler(object):
                     closestIndex = self.app.image.interpolated[self.app._frame_index].index(p)
             #label ink
             closestDist = np.linalg.norm(np.array([closest.x,closest.y])-np.array([x,y]))
-            #print(closestDist, "closest dist")
+           
             if closestDist < 0.01:
                 self.app.image.interpolated[self.app._frame_index][closestIndex].updateColor(self.app.annotationColorIdx)
 
@@ -227,7 +220,7 @@ class EventHandler(object):
                     closest = p
                     closestIndex = self.app.image.annotations[self.app._frame_index].index(p)
             closestDist = np.linalg.norm(np.array([closest.x,closest.y])-np.array([x,y]))
-            #print(closestDist, "closest dist")
+
             if closestDist < 0.01:
                 self.app.dragging = True
                 self.app.draggingIndex = closestIndex
@@ -250,7 +243,7 @@ class EventHandler(object):
                     closest = p
                     closestIndex = self.app.image.annotations[self.app._frame_index].index(p)
             closestDist = np.linalg.norm(np.array([closest.x,closest.y])-np.array([x,y]))
-            #print(closestDist, "closest dist")
+     
             if closestDist < 0.01:
                 self.app.image.annotations[self.app._frame_index].pop(closestIndex)
                 self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)

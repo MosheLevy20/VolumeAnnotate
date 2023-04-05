@@ -9,12 +9,11 @@ import copy
 class mImage(object):
 	def __init__(self, img, _frame_count, display_size=800, pixelSize=1):
 		self.img = cv2.imread(img)
-		print(self.img)
 	
 		self.pixelSize = pixelSize
 		self.display_width = display_size
 		self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
-		#print(self.display_height, self.display_width)
+
 		self.scale = 1
 		self.offset = np.array([0.0,0.0])
 		self.annotations = [[] for i in range(_frame_count)] #list of annotations of type mAnnotation
@@ -30,13 +29,11 @@ class mImage(object):
 		self.img = cv2.imread(img)
 
 	def zoom(self, factor):
-		#print("zooming")
 		self.scale *= factor
 		if self.scale < 0.01:
 			self.scale = 0.01
 		if self.scale > 1:
 			self.scale = 1
-		#(self.scale)
 
 	def pan(self, doffset):
 		#get all four corners of the image
@@ -59,7 +56,6 @@ class mImage(object):
 		for an in self.annotations[frame_index]:
 			an.show(img, self.annotationRadius, True)
 		for an in self.interpolated[frame_index]:
-			#print("showing interpolated")
 			an.show(img, self.annotationRadius, False)
 	
 
@@ -71,6 +67,7 @@ class mImage(object):
 		#then we'll find the "center" of each slices annotations, by finding the point with min distance from true center (i.e. center of middle slice)
 		#then for each slice populate the new image with the annotations to the left and right of the center
 		#remove all empty slices
+
 		interpolated = [i for i in self.interpolated if len(i) > 0]
 
 		H = len(interpolated)
@@ -92,6 +89,7 @@ class mImage(object):
 				img = cv2.imread(app._frame_list[i])
 				n = app.inkRadius
 				for jindex, j in enumerate(interpolated[i]):
+
 					if app.unwrapStyle == "Annotate":
 						val = colors[interpolated[i][jindex].colorIdx]
 					else:
@@ -103,10 +101,6 @@ class mImage(object):
 					im[i, W - (centerIndex-jindex)] = val
 			
 		return im
-
-				
-
-
 
 
 	def reset(self):
@@ -121,21 +115,16 @@ class mImage(object):
 
 		if show_annotations:
 			self.showAnnotations(img, frame_index)
-		#roll the image to account for the offset
-		# img = np.roll(img, -x0, axis=0)
-		# img = np.roll(img, -y0, axis=1)
+
 		x1 = int(img.shape[0]*self.scale)
 		y1 = int(img.shape[1]*self.scale)
 		#resize the image by interpolation
 		img = cv2.resize(img[x0:x1+x0, y0:y0+y1], (self.display_height, self.display_width))
 		#CONVERT to pixmap
-		#print(type(img))
 		data = img
 		bytesperline = 3 * data.shape[1]
 		qimg = QImage(data, data.shape[1], data.shape[0], bytesperline, QImage.Format_RGB888)
 		pixmap = QPixmap.fromImage(qimg)
-		#TypeError: fromImage(image: QImage, flags: Union[Qt.ImageConversionFlags, Qt.ImageConversionFlag] = Qt.AutoColor): argument 1 has unexpected type 'numpy.ndarray'
-		#
 		return pixmap
 
 
@@ -150,16 +139,7 @@ class mImage(object):
 			img = cv2.bitwise_not(img)
 		# #apply contrast filter
 		img = cv2.convertScaleAbs(img, alpha=self.contrast/5,beta=100)
-
-		# img = cv2.bitwise_not(img)
-		# #apply brightness threshold
-		# #img = np.where(img > 20, 255, 0)
-		# img = cv2.convertScaleAbs(img)
-		#do the above with cv2
-		# img = cv2.threshold(img, 20, 255, cv2.THRESH_BINARY)
-		# img = img[1]
 		
-
 		return img
 	
 
