@@ -253,7 +253,7 @@ class App(QWidget):
 
         self.layout.addWidget(self.button_edge, 17, 1,1,2, Qt.AlignTop)
 
-        self.layout.addWidget(QLabel("Edge Detection: Number of Slices"), 15, 1,1,2, Qt.AlignCenter)
+        self.layout.addWidget(QLabel("Edge Detection: Number of Frames"), 15, 1,1,2, Qt.AlignCenter)
         self.layout.addWidget(self.slider_edge, 16, 1, 1, 2)
 
         #hline
