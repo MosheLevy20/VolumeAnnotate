@@ -20,5 +20,7 @@ python VolumeAnnotate.py
 ```
 
 ## Usage
+If everything worked as it's supposed to, you should see a popup asking for the directory where your tif slices are stored. Once you select it, you should see a window that looks something like this:
+![alt text](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Layout.png)
 
 
