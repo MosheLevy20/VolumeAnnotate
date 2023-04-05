@@ -1,20 +1,8 @@
 import cv2
 import numpy as np
 from helpers import Point
-import numpy as np
-import copy
 
 def findEdges(initialEdge, filenameList, radius):
-    """
-    Given an initial edge in the form of a list of points and a list of filenames, returns a modified list of edge points for each image that lies on the edge.
-
-    Args:
-        initialEdge (list): A list of points representing the edge in the first 2D image.
-        filenameList (list): A list of filenames of 2D images.
-
-    Returns:
-        list: A list of lists, where each sublist contains the edge points for each image in the filenameList.
-    """
     # Initialize the list of edge points with the initial edge
     allEdges = [initialEdge]
 
@@ -30,8 +18,6 @@ def findEdges(initialEdge, filenameList, radius):
 
         # Find the intersection of the edges with the previous edge
         prevEdge = allEdges[-1]
-        print(prevEdge)
-        print(f"prevEdge length: {len(prevEdge)}")
         currentEdge = []
         #currentEdge = copy.deepcopy(prevEdge)
         
@@ -103,7 +89,7 @@ def bezier(points, display_width):
                 newPoints.append(getInterpolated(temp[index:index+2], t))
         bezier.append(Point(newPoints[0][0], newPoints[0][1],1))
         t += dt
-    print(len(bezier), len(points), len(points)/dt)
+
     return bezier
 
 def getInterpolated(points, t):

@@ -3,28 +3,11 @@ from mImage import mImage
 from helpers import *
 from eventHandlers import *
 
-#TODO:
-#still issue with clicking outside of image
+#TODO:s
+#still issue with clicking outside of image?
 #improve efficiency, maybe by loading more than one image into memory at a time
-#on startup choose folder
-#resize nodes
-#x and y in point is 0, 1 unlike everywhere else
-#add ability to change color of annotation, drop down menu (helpful for discovering which features matter)
-#fix edge finder
 #add measuring tool
 #image obj parameter initialization should be controlled from main app init
-#add "else's" everywhere, good practice even if never called
-#autosave more places
-
-#rearrange layout, and add more text
-
-#less important aesthetic things
-#resolution, i.e. interpolation density
-#dropdowns instead of cluttered buttons
-#sprites on the buttons
-#instructions
-
-
 
 #unique session id including timestamp, for autosaving progress
 sessionId = time.strftime("%Y%m%d-%H%M%S")+"autosave.pkl"
@@ -33,7 +16,7 @@ def load_tif(path):
     tif = []
     for filename in os.listdir(path):
         if filename.endswith(".tif"):
-            tif.append(path+filename)
+            tif.append(path+"/"+filename)
     #sort the list by the number in the filename
     tif.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
     #tif = sorted(tif)
@@ -43,14 +26,17 @@ def load_tif(path):
 
 class App(QWidget):
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.EH = EventHandler(self)
         self.sessionId = sessionId
         #set to full screen
         #self.showFullScreen()
-
-        self._frame_list = load_tif("../../campfire/rec/")
+        print(folder)
+        
+        self._frame_list = load_tif(folder)
+        
+        #self._frame_list = load_tif("../../campfire/rec/")
         #self._frame_list = load_tif("../../scroll1-1cm/")
         #self._frame_list = load_tif("../../scroll1-1cm-cropped/")
         #set grid layout
@@ -62,9 +48,8 @@ class App(QWidget):
         #add text for frame number, non editable
         self.frame_number = QLabel(self)
         self.frame_number.setText(f"Frame {self._frame_index+1}/{self._frame_count}")
-  
+        
         self.image = mImage(self._frame_list[0], len(self._frame_list))
-
 
 
         ########################################################################
@@ -394,8 +379,9 @@ class App(QWidget):
 
 
     
-#default to full screen
 
 app = QApplication([])
-win = App()
+#on startup request folder
+folder = QFileDialog.getExistingDirectory(None, "Select Directory")
+win = App(folder=folder)
 app.exec()

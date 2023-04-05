@@ -103,3 +103,9 @@ def getUnscaledRelCoords(app, pos):
 	#get pos relative to image 
 	pos = pos - image_pos
 	return pos
+
+def autoSave(app):
+	with open(app.sessionId, 'wb') as f:
+		pickle.dump(app.image.annotations, f)
+		pickle.dump(app.image.interpolated, f)
+		pickle.dump(app.image.img.shape, f)

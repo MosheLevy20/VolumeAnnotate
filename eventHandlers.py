@@ -18,12 +18,16 @@ class EventHandler(object):
             self.app.mouseMode = "Delete Points"
         elif id == 4:
             self.app.mouseMode = "Label Ink"
+        else:
+            print("Warning: invalid mouse mode")
      
     def on_unwrap_style(self, id):
         if id == 0:
             self.app.unwrapStyle = "Annotate"
         elif id == 1:
             self.app.unwrapStyle = "Project"
+        else:
+            print("Warning: invalid unwrap style")
     
     def on_annotation_color_change(self, id):
         self.app.annotationColorIdx = id
@@ -34,8 +38,6 @@ class EventHandler(object):
 
     def on_zoom_out(self, event):
         self.app.image.zoom(1.1)
-        
-
         
 
     def on_next_frame(self, event):
@@ -52,10 +54,7 @@ class EventHandler(object):
         self.app.image.annotations[self.app._frame_index] = copy.deepcopy(self.app.image.annotations[self.app._frame_index-1])
         self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)
         
-        with open(self.app.sessionId, 'wb') as f:
-            pickle.dump(self.app.image.annotations, f)
-            pickle.dump(self.app.image.interpolated, f)
-            pickle.dump(self.app.image.img.shape, f)
+        autoSave(self.app)
 
     def on_save(self, event):
         #save annotations to file using pickle, pop up window to ask for file name
@@ -135,7 +134,8 @@ class EventHandler(object):
         for i in range(1,self.app.edgeDepth):   
             self.app.update_ink(self.app._frame_index+i)
         #run ink detection on the new annotations
-                
+        
+        autoSave(self.app)
 
     def on_slider_edge_change(self, event):
         self.app.edgeDepth = self.app.slider_edge.value()
@@ -177,7 +177,8 @@ class EventHandler(object):
                 pickle.dump(self.app.image.annotations, f)
                 pickle.dump(self.app.image.interpolated, f)
                 pickle.dump(self.app.image.img.shape, f)
-
+        else:
+            print("Warning: Unrecognized key press")
         
     def mousePressEvent(self, event):
         #check if the mouse is out of the image
@@ -190,7 +191,7 @@ class EventHandler(object):
         x,y = getRelCoords(self.app,event.pos())
         if x < 0 or y < 0 or x > 1 or y > 1:
             return
-        # print(f"rel coords: {x}, {y}")
+        print(f"rel coords: {x}, {y}")
         # #print image coordinates
         # print(f"image coords: {x*self.app.image.img.shape[1]}, {y*self.app.image.img.shape[0]}")
 
@@ -253,7 +254,8 @@ class EventHandler(object):
             if closestDist < 0.01:
                 self.app.image.annotations[self.app._frame_index].pop(closestIndex)
                 self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)
-
+        else:
+            print("Warning: mouse mode not recognized")
 
     #on mouse release, stop dragging
     def mouseReleaseEvent(self, event):
@@ -302,3 +304,5 @@ class EventHandler(object):
                 self.app.image.pan(np.array([delta.y()*self.app.pixelSize0, delta.x()*self.app.pixelSize0]))
                 self.app.panStart = pos
                 self.app.panStartCoords = self.app.image.offset
+        else:
+            print("Warning: mouse mode not recognized")

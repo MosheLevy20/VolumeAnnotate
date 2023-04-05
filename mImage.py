@@ -3,14 +3,14 @@ import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
 import copy
-from helpers import Point
-from PIL import Image
 #ModuleNotFoundError: No module named 'PIL'
 #pip3 install pillow
 
 class mImage(object):
 	def __init__(self, img, _frame_count, display_size=800, pixelSize=1):
 		self.img = cv2.imread(img)
+		print(self.img)
+	
 		self.pixelSize = pixelSize
 		self.display_width = display_size
 		self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
