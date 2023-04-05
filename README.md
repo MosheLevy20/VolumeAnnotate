@@ -53,6 +53,6 @@ Here you can save and load annotations (if the app crashes you can load the most
 
 Finally, you can use the "Save 2D Projection" button to virtually unwrap your annotations (including the automatically detected ink). There are two options here: "Annotations" just unwraps your annotations, while "Pure Projection" simply takes the pixel values of the points (including the interpolated ones) that you onlined, ignoring the color of your annotations. Below is an example of a virtual unwrapping using both options.
 
-
-
+![Annotations](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/manualAnn.png)
+![Pure Projection](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/ManualPure.png)
 
