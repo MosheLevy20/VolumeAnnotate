@@ -32,6 +32,11 @@ Next is the mouse menu:
 2. Outline Fragment. This allows you to outline the surface of a fragment by clicking on a series of points, as shown in the image below
 ![outline fragment](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/outlinefragment.png)
 3. Move Points. Allows you to move already placed points.
-4. Delete Points. Dele
+4. Delete Points. Allows you to delete already placed points.
+5. Annotate. Allows you to color existing points, for example to label where you think ink is. You can select various colors to annotate various different features that you wish to see in the unwrapped image. The default for ink is green, it is used in the automatic ink detection described below.
+![outline fragment](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/annotations.png)
+
+### Second Section
+
 
 
