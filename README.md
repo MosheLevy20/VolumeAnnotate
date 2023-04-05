@@ -3,7 +3,7 @@ Virtual Unwrapping Tool for the Vesuvius Challenge
 
 ## Getting Started
 ### Installation
-
+Note: Python3 is required.
 1. Clone the repo
 ```sh
 git clone https://github.com/MosheLevy20/VolumeAnnotate.git
