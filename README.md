@@ -45,7 +45,7 @@ The "Find Ink" button applies the threshold to the current frame only.
 
 The "Copy Previous Frame" button duplicates the points and annoations from the previous frame. 
 
-The "Edge Detection" button takes the current frame's points and tries to adjust their positions in the next N frames (where N is specified by the slider) to keep them along the edge you outlined. It also automatically applies the ink detection to all the frames it went through.
+The "Edge Detection" button takes the current frame's points and tries to adjust their positions in the next N frames (where N is specified by the slider) to keep them along the edge you outlined. It also automatically applies the ink detection to all the frames it went through. (This is still a work in progress, so you may need to manually adjust the points if the algorithm gets it wrong).
 
 
 ### Fourth Section
