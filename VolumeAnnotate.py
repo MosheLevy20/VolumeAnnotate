@@ -207,11 +207,11 @@ class App(QWidget):
         self.label.setPixmap(self.image.getImg(0))
         #self.layout.rowStretch(2)#didn't work, try: 
         self.layout.addWidget(self.label, 0, 0, 30,1)
-        self.layout.addWidget(self.button_zoom_in, 3, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_zoom_in, 3, 2, Qt.AlignRight)
         #the parameters are: row, column, rowspan, colspan, alignment
-        self.layout.addWidget(self.button_zoom_out, 3, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_next_frame, 1, 2, 1,1, Qt.AlignTop)
-        self.layout.addWidget(self.button_previous_frame, 1, 1,1,1, Qt.AlignTop)
+        self.layout.addWidget(self.button_zoom_out, 3, 1, Qt.AlignLeft)
+        self.layout.addWidget(self.button_next_frame, 1, 2, Qt.AlignRight)
+        self.layout.addWidget(self.button_previous_frame, 1, 1, Qt.AlignLeft)
 
         self.layout.addWidget(self.frame_number, 2, 1,1,2, Qt.AlignCenter)
         #add black horizontal line
@@ -266,9 +266,9 @@ class App(QWidget):
         self.layout.addWidget(self.button_load, 21, 1, 1, 2, Qt.AlignCenter)
         
         #add text "Projection Style"
-        self.layout.addWidget(QLabel("Projection Style:"), 22, 1, Qt.AlignCenter)
-        self.layout.addWidget(self.unwrapStyleWidget, 22, 2, 1,1)
-        self.layout.addWidget(self.button_save_2D, 23, 1,1,2, Qt.AlignCenter)
+        self.layout.addWidget(QLabel("Projection Style:"), 22, 1, 1,2, Qt.AlignCenter)
+        self.layout.addWidget(self.unwrapStyleWidget,23, 1, 1,2, Qt.AlignCenter)
+        self.layout.addWidget(self.button_save_2D, 24, 1,1,2, Qt.AlignCenter)
 
         
 
