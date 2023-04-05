@@ -36,7 +36,23 @@ Next is the mouse menu:
 5. Annotate. Allows you to color existing points, for example to label where you think ink is. You can select various colors to annotate various different features that you wish to see in the unwrapped image. The default for ink is green, it is used in the automatic ink detection described below.
 ![outline fragment](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/annotations.png)
 
-### Second Section
+### Third Section
+This is where you can select various parameters for the automated ink detection and segmentation. The ink detection is quite simple, it is just a brightness threshold. You can adjust the threshold directly, as well as the radius that the threshold takes into consideration. Adjusting the contrast will also impact where ink is detected. I have found that inverting the image and then applying strong contrast picks out the iron gal ink in the campfire scroll quite well (keep in mind that when you invert the image, the threshold is now an upper bound instead of a lower bound). All of these can be tuned by eye to try and isolate signal from noise. 
+
+The "Annotation Radius" slider and "Hide Annotations" button are just for visual purposes and have no impact on the ink detection.
+
+The "Find Ink" button applies the threshold to the current frame only. 
+
+The "Copy Previous Frame" button duplicates the points and annoations from the previous frame. 
+
+The "Edge Detection" button takes the current frame's points and tries to adjust their positions in the next N frames (where N is specified by the slider) to keep them along the edge you outlined. It also automatically applies the ink detection to all the frames it went through.
+
+
+### Fourth Section
+Here you can save and load annotations (if the app crashes you can load the most recent autosave).
+
+Finally, you can use the "Save 2D Projection" button to virtually unwrap your annotations (including the automatically detected ink). There are two options here: "Annotations" just unwraps your annotations, while "Pure Projection" simply takes the pixel values of the points (including the interpolated ones) that you onlined, ignoring the color of your annotations. Below is an example of a virtual unwrapping using both options.
+
 
 
 
