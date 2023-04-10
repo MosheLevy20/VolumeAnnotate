@@ -8,9 +8,11 @@ from eventHandlers import *
 #app bool specifying whether we're using memmap or not, used throughout 
 #think if any other data structures need to be memmap
 
+
 #change edgefinder, using the stuff I found (including variance thresholding)
 
 #add button update ink for all frames
+
 
 #add measuring tool
 #image obj parameter initialization should be controlled from main app init?

@@ -2,6 +2,33 @@ import cv2
 import numpy as np
 from helpers import Point
 
+
+def find_and_discard_small_edges(image, min_edge_length=100):
+    mu = np.mean(image)
+    sigma = np.std(image)
+    
+    image= np.where(image > mu, 255, 0)
+    image = np.array(image, dtype=np.uint8)
+    # Apply Gaussian blur to reduce noise
+    image = cv2.GaussianBlur(image, (3, 3), 0)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(image, mu, mu+sigma)
+
+    # # Find contours from the edges
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # # Filter contours by length
+    filtered_contours = [contour for contour in contours if cv2.arcLength(contour, True) > min_edge_length]
+
+    # # Create a black image to draw filtered contours
+    result_image = np.zeros_like(image)
+
+    # # Draw the filtered contours on the result image
+    cv2.drawContours(result_image, filtered_contours, -1, (255, 255, 255), 1)
+
+    return result_image
+
 def findEdges(initialEdge, filenameList, radius):
     # Initialize the list of edge points with the initial edge
     allEdges = [initialEdge]
@@ -15,8 +42,7 @@ def findEdges(initialEdge, filenameList, radius):
         # Increase contrast
         currentImage = cv2.convertScaleAbs(currentImage, alpha=2.5, beta=0)
 
-        edges = np.zeros(currentImage.shape)
-        edges[currentImage > 100] = 255
+        edges = find_and_discard_small_edges(currentImage, 50)
  
         # Find the intersection of the edges with the previous edge
         prevEdge = allEdges[-1]
