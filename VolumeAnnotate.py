@@ -10,13 +10,10 @@ from eventHandlers import *
 
 #change edgefinder, using the stuff I found (including variance thresholding)
 
+#add button update ink for all frames
 
-#add button updat ink for all frames
-
-
-#improve efficiency, maybe by loading more than one image into memory at a time
 #add measuring tool
-#image obj parameter initialization should be controlled from main app init
+#image obj parameter initialization should be controlled from main app init?
 
 #unique session id including timestamp, for autosaving progress
 sessionId = time.strftime("%Y%m%d-%H%M%S")+"autosave.pkl"
