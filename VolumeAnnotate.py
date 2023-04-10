@@ -8,11 +8,7 @@ from eventHandlers import *
 #app bool specifying whether we're using memmap or not, used throughout 
 #think if any other data structures need to be memmap
 
-
-#change edgefinder, using the stuff I found (including variance thresholding)
-
 #add button update ink for all frames
-
 
 #add measuring tool
 #image obj parameter initialization should be controlled from main app init?
@@ -94,8 +90,11 @@ class App(QWidget):
         self.button_save_2D.clicked.connect(self.EH.on_save_2D)
 
         #button that finds ink based on threshold
-        self.button_ink = QPushButton('Find Ink', self)
+        self.button_ink = QPushButton('Find Ink (This Frame)', self)
         self.button_ink.clicked.connect(self.EH.on_ink)
+
+        self.button_ink_all = QPushButton('Find Ink (All Frames)', self)
+        self.button_ink_all.clicked.connect(self.EH.on_ink_all)
 
         #slider for threshold
         self.slider = QSlider(Qt.Horizontal, self)
@@ -228,9 +227,9 @@ class App(QWidget):
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
         self.layout.addWidget(hline, 4, 1, 1, 3)
-    
+        
         self.layout.addWidget(self.mouseModeWidget, 4, 1, 5,1)
-
+        self.layout.addWidget(self.button_show_annotations, 5, 2, 1, 1)
         #add text "Annotation Color"
         self.layout.addWidget(QLabel("Annotation Color:"), 6, 2, Qt.AlignCenter)
         self.layout.addWidget(self.annotationColorMenu, 7, 2, 1, 1)
@@ -255,8 +254,9 @@ class App(QWidget):
         self.layout.addWidget(QLabel("Contrast"), 12, 1, Qt.AlignRight)
         self.layout.addWidget(self.slider_contrast, 12, 2, 1, 1)
 
-        self.layout.addWidget(self.button_ink, 13, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_show_annotations, 13, 2, 1, 1)
+        self.layout.addWidget(self.button_ink, 13, 1,1,1)
+        self.layout.addWidget(self.button_ink_all, 13, 2,1,1)
+        
 
         self.layout.addWidget(self.button_invert, 14, 1, Qt.AlignTop)
         self.layout.addWidget(self.button_copy, 14, 2, Qt.AlignTop)

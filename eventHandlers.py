@@ -84,9 +84,13 @@ class EventHandler(object):
             
     def on_ink(self, event):
         self.app.update_ink()
+
+    def on_ink_all(self, event):
+        #loop through all frames and run ink detection
+        for i in range(self.app._frame_count):
+            self.app.update_ink(i)
+        autoSave(self.app)
         
-
-
     def on_slider_change(self, event):
         self.app.inkThreshold = self.app.slider.value()
         self.app.update_ink()
