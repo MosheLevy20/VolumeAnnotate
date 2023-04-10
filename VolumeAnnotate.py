@@ -4,7 +4,16 @@ from helpers import *
 from eventHandlers import *
 
 #TODO:s
-#still issue with clicking outside of image?
+#implement option for memmap. both selecting memmap dat file on startup, and option to convert tifs to memmap (also on startup, warn abt storage, check if memmap exists, if not, convert)
+#app bool specifying whether we're using memmap or not, used throughout 
+#think if any other data structures need to be memmap
+
+#change edgefinder, using the stuff I found (including variance thresholding)
+
+
+#add button updat ink for all frames
+
+
 #improve efficiency, maybe by loading more than one image into memory at a time
 #add measuring tool
 #image obj parameter initialization should be controlled from main app init
@@ -15,7 +24,8 @@ sessionId = time.strftime("%Y%m%d-%H%M%S")+"autosave.pkl"
 def load_tif(path):
     tif = []
     for filename in os.listdir(path):
-        if filename.endswith(".tif"):
+        #check if digit in filename
+        if (filename.endswith(".tif") or filename.endswith(".png")) and any(char.isdigit() for char in filename):
             tif.append(path+"/"+filename)
     #sort the list by the number in the filename
     tif.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
@@ -144,6 +154,7 @@ class App(QWidget):
         self.slider_edge.setValue(10)
         self.slider_edge.valueChanged.connect(self.EH.on_slider_edge_change)
         self.edgeDepth = 10
+        self.edgeDepthTxt = QLabel(f"Edge Detection: Number of Frames = {self.edgeDepth}")
 
         #create menu for mouse modes
         self.mouseModeGroup = QButtonGroup()
@@ -253,7 +264,8 @@ class App(QWidget):
 
         self.layout.addWidget(self.button_edge, 17, 1,1,2, Qt.AlignTop)
 
-        self.layout.addWidget(QLabel("Edge Detection: Number of Frames"), 15, 1,1,2, Qt.AlignCenter)
+        
+        self.layout.addWidget(self.edgeDepthTxt, 15, 1,1,2, Qt.AlignCenter)
         self.layout.addWidget(self.slider_edge, 16, 1, 1, 2)
 
         #hline

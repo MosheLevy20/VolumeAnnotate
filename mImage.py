@@ -3,16 +3,22 @@ import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
 import copy
-#ModuleNotFoundError: No module named 'PIL'
-#pip3 install pillow
 
 class mImage(object):
 	def __init__(self, img, _frame_count, display_size=800, pixelSize=1):
 		self.img = cv2.imread(img)
 	
 		self.pixelSize = pixelSize
-		self.display_width = display_size
-		self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
+		# self.display_width = display_size
+		# self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
+		#find the max dimension index
+		maxDim = np.argmax(self.img.shape)
+		if maxDim == 0:
+			self.display_width = display_size
+			self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
+		else:
+			self.display_height = display_size
+			self.display_width = int(display_size*self.img.shape[0]/self.img.shape[1])
 
 		self.scale = 1
 		self.offset = np.array([0.0,0.0])

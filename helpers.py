@@ -53,8 +53,8 @@ class Point(object):
 		if node:
 			size *= 2
 		#draws point to copy of the current frame
-		x = int(self.x*arr.shape[0])
-		y = int(self.y*arr.shape[1])
+		x = int(self.x*arr.shape[1])
+		y = int(self.y*arr.shape[0])
 		cv2.circle(arr, (x,y), size, self.color, -1)
 	
 	def updateColor(self, colorIdx):
@@ -67,35 +67,46 @@ def getColor(colorIdx):
 
 
 def interpolatePoints(points, imShape):
-		#use linear interpolation to interpolate between points in the annotation list
-		points = [[i.x, i.y] for i in points]
-		interp = []
-		for i in range(len(points)-1):
-			#find the distance between the two points
-			dist = np.sqrt((points[i+1][0]-points[i][0])**2 + (points[i+1][1]-points[i][1])**2)
-			#find the number of points to interpolate between them
-			n = int(dist*imShape[0])#TODO
-			if n == 0:
-				continue
-			#find the step size
-			step = 1/n
-			#interpolate between the two points
-			for j in np.arange(0,n,3):
-				x = points[i][0] + (points[i+1][0]-points[i][0])*j*step
-				y = points[i][1] + (points[i+1][1]-points[i][1])*j*step
-				interp.append(Point(x, y, 0,2))
-		return interp
+	#use linear interpolation to interpolate between points in the annotation list
+	pixels = [[i.x*imShape[1], i.y*imShape[0]] for i in points]
+	interp = []
+	for i in range(len(pixels)-1):
+		#find the distance between the two points
+		dist = np.sqrt((pixels[i+1][0]-pixels[i][0])**2 + (pixels[i+1][1]-pixels[i][1])**2)
+		#find the number of pixels to interpolate between them
+		n = int(dist)#TODO
+		if n == 0:
+			continue
+		#find the step size
+		step = 1/n
+		#interpolate between the two pixels
+		for j in np.arange(0,n,1):
+			x = pixels[i][0] + (pixels[i+1][0]-pixels[i][0])*j*step
+			y = pixels[i][1] + (pixels[i+1][1]-pixels[i][1])*j*step
+			interp.append(Point(x/imShape[1], y/imShape[0],0,2))
+	return interp
 
-	
+
+
+#get the coordinates of the mouse relative to the image frame
+def getImFrameCoords(app, pos):
+	pos = getUnscaledRelCoords(app, pos)
+	image_rect = app.label.pixmap().rect()
+	x = pos.x()/image_rect.width()
+	y = pos.y()/image_rect.height()
+	return x,y
+
+#get the coordinates of the mouse relative to the full image
 def getRelCoords(app, pos):
 	pos = getUnscaledRelCoords(app, pos)
 	image_rect = app.label.pixmap().rect()
 	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
 	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
-	x /= image_rect.height()
-	y /= image_rect.width()
+	x /= image_rect.width()
+	y /= image_rect.height()
 	return x,y
 
+#get the coordinates of the mouse, shifting the origin to the top left corner of the image
 def getUnscaledRelCoords(app, pos):
 	label_pos = app.label.pos()
 	image_rect = app.label.pixmap().rect()
@@ -103,6 +114,12 @@ def getUnscaledRelCoords(app, pos):
 	#get pos relative to image 
 	pos = pos - image_pos
 	return pos
+
+#get pixel coordinates from relative coordinates
+def getPixelCoords(imShape, x, y):
+	x = int(x*imShape[1])
+	y = int(y*imShape[0])
+	return x,y
 
 def autoSave(app):
 	with open(app.sessionId, 'wb') as f:

@@ -124,19 +124,20 @@ class EventHandler(object):
         edges = findEdges(self.app.image.annotations[self.app._frame_index], imageNames, self.app.inkRadius)
       
         #add the edges as the annotations for the next edgeDepth frames
-        for i in range(1,self.app.edgeDepth):
+        for i in range(1,len(edges)):
             #annotations is every n'th entry in interpolated, use slice notation
             self.app.image.annotations[self.app._frame_index+i] = edges[i]
             self.app.image.interpolated[self.app._frame_index+i] = interpolatePoints(edges[i], self.app.image.img.shape)
 
         #run ink detection on the new annotations
-        for i in range(1,self.app.edgeDepth):   
+        for i in range(1,len(edges)):   
             self.app.update_ink(self.app._frame_index+i)
         
         autoSave(self.app)
 
     def on_slider_edge_change(self, event):
         self.app.edgeDepth = self.app.slider_edge.value()
+        self.app.edgeDepthTxt.setText(f"Edge Detection: Number of Frames = {self.app.edgeDepth}")
         #self.app.label_edge.setText(f"Edge Depth: {self.app.edgeDepth}")
 
 
@@ -183,9 +184,11 @@ class EventHandler(object):
 
         x,y = getRelCoords(self.app,event.pos())
         #check if the mouse is out of the image
-        if x < 0 or y < 0 or x > 1 or y > 1:
+        xf,yf = getImFrameCoords(self.app, event.pos())
+        if xf < 0 or yf < 0 or xf > 1 or yf > 1:
             return
         print(f"rel coords: {x}, {y}")
+        print(f"frame coords: {xf}, {yf}")
         
 
         if self.app.mouseMode == "Outline Fragment":
@@ -248,7 +251,7 @@ class EventHandler(object):
                 self.app.image.annotations[self.app._frame_index].pop(closestIndex)
                 self.app.image.interpolated[self.app._frame_index] = interpolatePoints(self.app.image.annotations[self.app._frame_index], self.app.image.img.shape)
         else:
-            print("Warning: mouse mode not recognized")
+            print(f"Warning: mouse mode not recognized: {self.app.mouseMode}")
 
     #on mouse release, stop dragging
     def mouseReleaseEvent(self, event):
@@ -288,14 +291,9 @@ class EventHandler(object):
         elif self.app.mouseMode == "Pan":
             if self.app.panning:
                 pos = getUnscaledRelCoords(self.app, event.pos())
-                image_rect = self.app.label.pixmap().rect()
-                #divide pos.x by image_rect.width() 
-                #divide pos.y by image_rect.height()
-                
                 delta = self.app.panStart - pos
-                #delta = delta * self.app.image.scale
                 self.app.image.pan(np.array([delta.y()*self.app.pixelSize0, delta.x()*self.app.pixelSize0]))
                 self.app.panStart = pos
                 self.app.panStartCoords = self.app.image.offset
         else:
-            print("Warning: mouse mode not recognized")
+            print(f"Warning: mouse mode not recognized {self.app.mouseMode}")
