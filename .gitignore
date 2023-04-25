@@ -1,0 +1,11 @@
+# .gitignore
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Visual Studio and Visual Studio Code folders
+.vs/
+.vscode/
