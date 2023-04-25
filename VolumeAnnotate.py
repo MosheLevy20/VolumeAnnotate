@@ -30,7 +30,6 @@ def load_tif(path):
     print(tif)
     return tif
 
-
 class App(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
@@ -54,6 +53,7 @@ class App(QWidget):
 
         # add text for frame number, editable
         self.frame_edit_display = QLineEdit()
+        self.frame_edit_display.setFocusPolicy(Qt.ClickFocus)
         self.frame_edit_display.setText(str(self._frame_index + 1))
         self.frame_edit_display.setValidator(QIntValidator(1, self._frame_count + 1))
         # self.frame_edit_display.editingFinished.connect(self.on_frame_edited())

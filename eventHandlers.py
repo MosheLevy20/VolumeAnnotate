@@ -165,6 +165,7 @@ class EventHandler(object):
         # self.app.label_edge.setText(f"Edge Depth: {self.app.edgeDepth}")
 
     def keyPressEvent(self, event):
+        print(event.key())
         if event.key() == Qt.Key_Right:
             self.app._frame_index = (self.app._frame_index + 1) % self.app._frame_count
             self.app._update_frame()
@@ -208,6 +209,7 @@ class EventHandler(object):
             print("Warning: Unrecognized key press")
 
     def mousePressEvent(self, event):
+        self.app.frame_edit_display.clearFocus()
         self.app.clickState = 1
 
         x, y = getRelCoords(self.app, event.pos())
