@@ -160,6 +160,9 @@ class Volpkg(object):
 		H = len(interpolated)
 		W = max([len(i) for i in interpolated])
 		im = np.zeros((H, W*2, 3), dtype=np.uint8)
+		#replace all 0's with [nan, nan, nan]
+		im[im == 0] = np.nan
+		
 		cy = H//2
 
 		Center = interpolated[cy][len(interpolated[cy])//2]
@@ -182,6 +185,8 @@ class Volpkg(object):
 			
 					
 					im[i, W - (centerIndex-jindex)] = [x,y,i]
+			
+	
 			
 		return im
 
