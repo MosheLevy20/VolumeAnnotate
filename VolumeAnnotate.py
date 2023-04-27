@@ -3,43 +3,27 @@ from mImage import mImage
 from helpers import *
 from eventHandlers import *
 
-# TODO:s
-# implement option for memmap. both selecting memmap dat file on startup, and option to convert tifs to memmap (also on startup, warn abt storage, check if memmap exists, if not, convert)
-# app bool specifying whether we're using memmap or not, used throughout
-# think if any other data structures need to be memmap
-
-
-# add measuring tool
-# image obj parameter initialization should be controlled from main app init?
 
 # unique session id including timestamp, for autosaving progress
-sessionId = time.strftime("%Y%m%d-%H%M%S") + "autosave.pkl"
+sessionId0 = time.strftime("%Y%m%d%H%M%S") 
+sessionId = sessionId0 + "autosave.pkl"
 
 
-def load_tif(path):
-    tif = []
-    for filename in os.listdir(path):
-        # check if digit in filename
-        if (filename.endswith(".tif") or filename.endswith(".png")) and any(
-            char.isdigit() for char in filename
-        ):
-            tif.append(path + "/" + filename)
-    # sort the list by the number in the filename
-    tif.sort(key=lambda f: int("".join(filter(str.isdigit, f))))
-    # tif = sorted(tif)
-    print(tif)
-    return tif
 
 class App(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.EH = EventHandler(self)
+
         self.sessionId = sessionId
+        self.sessionId0 = sessionId0
         # set to full screen
         # self.showFullScreen()
         print(folder)
+        self.volpkg = Volpkg(folder, sessionId0)
 
-        self._frame_list = load_tif(folder)
+        self._frame_list = self.volpkg.tifstack
+        #self._frame_list = load_tif(folder)
 
         # set grid layout
         self.layout = QGridLayout()
@@ -85,15 +69,19 @@ class App(QWidget):
         self.button_copy.clicked.connect(self.EH.on_copy)
 
         # save annotations
-        self.button_save = QPushButton("Save Annotations", self)
+        self.button_save = QPushButton("Save To volpkg", self)
         self.button_save.clicked.connect(self.EH.on_save)
         # load annotations
-        self.button_load = QPushButton("Load Annotations", self)
+        self.button_load = QPushButton("Load Annotations (.pkl)", self)
         self.button_load.clicked.connect(self.EH.on_load)
 
         # save as 2d mask
         self.button_save_2D = QPushButton("Save 2D Projection", self)
         self.button_save_2D.clicked.connect(self.EH.on_save_2D)
+
+        #Show 3d preview
+        # self.button_show_3D = QPushButton("Show 3D Preview", self)
+        # self.button_show_3D.clicked.connect(self.EH.on_show_3D)
 
         # button that finds ink based on threshold
         self.button_ink = QPushButton("Find Ink (This Frame)", self)
@@ -284,6 +272,9 @@ class App(QWidget):
         self.layout.addWidget(self.unwrapStyleWidget, 25, 1, 1, 2, Qt.AlignCenter)
         self.layout.addWidget(self.button_save_2D, 26, 1, 1, 2, Qt.AlignCenter)
 
+        #self.layout.addWidget(self.button_show_3D, 27, 1, 1, 2, Qt.AlignCenter)
+        
+
         self.panLen = self.image.getImg(self._frame_index).width() / 5
 
         self.pixelSize0 = (
@@ -369,6 +360,11 @@ class App(QWidget):
 
     def mouseReleaseEvent(self, event):
         return self.EH.mouseReleaseEvent(event)
+    
+    
+
+
+        
 
 
 app = QApplication([])

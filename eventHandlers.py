@@ -70,10 +70,7 @@ class EventHandler(object):
             self.app, "Save File", os.getcwd(), "Pickle Files (*.pkl)"
         )
         if filename[0] != "":
-            with open(filename[0], "wb") as f:
-                pickle.dump(self.app.image.annotations, f)
-                pickle.dump(self.app.image.interpolated, f)
-                pickle.dump(self.app.image.img.shape, f)
+            autoSave(self.app, filename[0])
 
     def on_load(self, event):
         # load annotations from file using pickle, pop up window to ask for file name
@@ -94,6 +91,60 @@ class EventHandler(object):
         if filename[0] != "":
             # use cv2 to save image
             cv2.imwrite(filename[0], image2D)
+    
+    # def on_show_3D(self, event):
+    #     #check if there are any annotations in any of the rows
+    #     lens = [len(i) for i in self.app.image.interpolated]
+    #     if sum(lens) == 0:
+    #         return
+    #     #get 3D voxel data
+    #     #create empty np array whose size is the boudning box of the interpolated
+    #     #loop through all interpolated and set the corresponding voxels to 1
+    #     imshape = self.app.image.img.shape
+    #     #zmin, zmax, xmin, xmax, ymin, ymax = getBoundingBox(self.app.image.interpolated, imshape)
+    #     voxels = np.zeros((len(self.app.image.interpolated), imshape[0], imshape[1]))
+    #     for i in range(len(self.app.image.interpolated)):
+    #         img = cv2.imread(self.app._frame_list[i], cv2.IMREAD_GRAYSCALE)
+    #         for j in range(len(self.app.image.interpolated[i])):
+    #             #get voxel value
+        
+    #             x = int(self.app.image.interpolated[i][j].x*imshape[0])
+    #             y = int(self.app.image.interpolated[i][j].y*imshape[1])
+    #             # value = img[x][y]
+    #             # print(value)
+    #             # print(i, x, y)
+    #             # #print(zmin, zmax, xmin, xmax, ymin, ymax)
+    #             # print(voxels.shape)
+    #             # voxels[i][x][y] = value
+    #             #for x,y and all its neighbors, set voxel to value
+    #             r = 10
+    #             for x1 in range(x-10, x+11):
+    #                 for y1 in range(y-10, y+11):
+    #                     if x1 >= 0 and x1 < imshape[0] and y1 >= 0 and y1 < imshape[1]:
+    #                         #equal mean of neighbors out to radius
+    #                         voxels[i][x1][y1] = img[x-r:x+r+1, y-r:y+r+1].mean()+np.random.randint(1,255)
+            
+    #     #pad the region around nonzero values with the average of their neighbors
+        
+
+    #     #crop voxels to region with nonzero values
+    #     nonzero_z, nonzero_x, nonzero_y = np.nonzero(voxels)
+
+    #     # Find the min and max indices along each axis
+    #     z_min, z_max = np.min(nonzero_z), np.max(nonzero_z)
+    #     y_min, y_max = np.min(nonzero_y), np.max(nonzero_y)
+    #     x_min, x_max = np.min(nonzero_x), np.max(nonzero_x)
+
+    #     # Slice the array using these indices
+    #     voxels = voxels[z_min:z_max+1, x_min:x_max+1, y_min:y_max+1]*255
+
+    #     #swap x and z axes
+    #     voxels = np.swapaxes(voxels, 1, 0)
+
+
+    #     #create popup window with VoxVis object
+    #     self.app.voxVis = VoxelViewer(self.app, data=voxels)
+    #     self.app.voxVis.show()
 
     def on_ink(self, event):
         self.app.update_ink()
