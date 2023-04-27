@@ -5,20 +5,22 @@ from PyQt5.QtGui import QPixmap, QImage
 import copy
 
 class mImage(object):
-	def __init__(self, img, _frame_count, display_size=800, pixelSize=1):
-		self.img = cv2.imread(img)
+	def __init__(self, img, _frame_count, TheData, display_size=800, pixelSize=1):
+		self.TheData = TheData
+		self.img = self.TheData.getFrame(0)
+		self.imshape = self.img.shape
 	
 		self.pixelSize = pixelSize
 		# self.display_width = display_size
-		# self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
+		# self.display_height = int(display_size*self.imshape[1]/self.imshape[0])
 		#find the max dimension index
-		maxDim = np.argmax(self.img.shape)
+		maxDim = np.argmax(self.imshape)
 		if maxDim == 0:
 			self.display_width = display_size
-			self.display_height = int(display_size*self.img.shape[1]/self.img.shape[0])
+			self.display_height = int(display_size*self.imshape[1]/self.imshape[0])
 		else:
 			self.display_height = display_size
-			self.display_width = int(display_size*self.img.shape[0]/self.img.shape[1])
+			self.display_width = int(display_size*self.imshape[0]/self.imshape[1])
 
 		self.scale = 1
 		self.offset = np.array([0.0,0.0])
@@ -31,8 +33,8 @@ class mImage(object):
 		self.invert = False
 
 
-	def setImg(self, img):
-		self.img = cv2.imread(img)
+	def setImg(self, i):
+		self.img = self.TheData.getFrame(i)
 
 	def zoom(self, factor):
 		self.scale *= factor
@@ -45,24 +47,24 @@ class mImage(object):
 		#get all four corners of the image
 		x0 = int(self.offset[0])
 		y0 = int(self.offset[1])
-		x1 = int(self.img.shape[0]*self.scale)
-		y1 = int(self.img.shape[1]*self.scale)
+		x1 = int(self.imshape[0]*self.scale)
+		y1 = int(self.imshape[1]*self.scale)
 		if x0 + doffset[0] < 0:
 			doffset[0] = -x0
 		if y0 + doffset[1] < 0:
 			doffset[1] = -y0
-		if x0 + doffset[0] + x1 > self.img.shape[0]:
-			doffset[0] = self.img.shape[0] - x0 - x1
-		if y0 + doffset[1] + y1 > self.img.shape[1]:
-			doffset[1] = self.img.shape[1] - y0 - y1
+		if x0 + doffset[0] + x1 > self.imshape[0]:
+			doffset[0] = self.imshape[0] - x0 - x1
+		if y0 + doffset[1] + y1 > self.imshape[1]:
+			doffset[1] = self.imshape[1] - y0 - y1
 		self.offset += doffset*self.scale
 	
 
-	def showAnnotations(self, img, frame_index):
+	def showAnnotations(self, img, frame_index, x0,y0,scale):
 		for an in self.annotations[frame_index]:
-			an.show(img, self.annotationRadius, True)
+			an.show(img, self.annotationRadius, True, x0,y0,scale)
 		for an in self.interpolated[frame_index]:
-			an.show(img, self.annotationRadius, False)
+			an.show(img, self.annotationRadius, False, x0,y0,scale)
 	
 
 	def get2DImage(self, app):
@@ -92,7 +94,6 @@ class mImage(object):
 						center = j
 						centerIndex = jindex
 				#populate the image with the interpolated to the left and right of the center
-				img = cv2.imread(app._frame_list[i])
 				n = app.inkRadius
 				for jindex, j in enumerate(interpolated[i]):
 
@@ -100,9 +101,9 @@ class mImage(object):
 						val = colors[interpolated[i][jindex].colorIdx]
 					else:
 						x,y = interpolated[i][jindex].x, interpolated[i][jindex].y
-						x *= self.img.shape[0]
-						y *= self.img.shape[1]
-						region = img[int(y-n):int(y+n), int(x-n):int(x+n)]
+						x *= self.imshape[0]
+						y *= self.imshape[1]
+						region = self.TheData[i, int(y-n):int(y+n), int(x-n):int(x+n)]
 						val = np.mean(region, axis=(0,1))
 					im[i, W - (centerIndex-jindex)] = val
 			
@@ -117,28 +118,34 @@ class mImage(object):
 		#return the image with the current zoom and pan applied
 		x0 = int(self.offset[0])
 		y0 = int(self.offset[1])
-		img = self.getProcImg()
 
+		
+
+		x1 = int(self.imshape[0]*self.scale)
+		y1 = int(self.imshape[1]*self.scale)
+		img = self.TheData[frame_index, x0:x1+x0, y0:y0+y1]
+
+		img = self.getProcImg(img)
 		if show_annotations:
-			self.showAnnotations(img, frame_index)
-
-		x1 = int(img.shape[0]*self.scale)
-		y1 = int(img.shape[1]*self.scale)
+			self.showAnnotations(img, frame_index, y0, x0, self.scale)
 		#resize the image by interpolation
-		img = cv2.resize(img[x0:x1+x0, y0:y0+y1], (self.display_height, self.display_width))
+		img = cv2.resize(img, (self.display_height, self.display_width))
+
+		
 		#CONVERT to pixmap
 		data = img
 		bytesperline = 3 * data.shape[1]
+
 		qimg = QImage(data, data.shape[1], data.shape[0], bytesperline, QImage.Format_RGB888)
+
 		pixmap = QPixmap.fromImage(qimg)
 		return pixmap
 
 
-	def getProcImg(self, filename=None):
-		if filename is None:
-			img = copy.deepcopy(self.img)
-		else:
-			img = cv2.imread(filename)
+	def getProcImg(self, img=None, index=None):
+		if index != None:
+			img = self.TheData.getFrame(index)
+
 	
 		#invert the image
 		if self.invert:

@@ -52,12 +52,12 @@ class Point(object):
 			raise IndexError("Point index out of range")
 
 
-	def show(self, arr, size, node):
+	def show(self, arr, size, node, x0,y0,scale):
 		if node:
 			size *= 2
 		#draws point to copy of the current frame
-		x = int(self.x*arr.shape[1])
-		y = int(self.y*arr.shape[0])
+		x = int((self.x*arr.shape[1])/scale)-x0
+		y = int((self.y*arr.shape[0])/scale)-y0
 		cv2.circle(arr, (x,y), size, self.color, -1)
 	
 	def updateColor(self, colorIdx):
@@ -189,6 +189,52 @@ class Volpkg(object):
 	
 			
 		return im
+
+
+
+class Loader:
+	def __init__(self, shape, maxsize, mmap_file, tifStack):
+		self.numcalls = 0
+		self.shape = shape
+		self.maxsize = maxsize
+		self.mmap_file = mmap_file
+		self.mmap = np.zeros(dtype=np.float64, shape=(maxsize, *shape))
+		self.calls = []
+		self.times = []
+		self.tifStack = tifStack
+	
+	#overload index operator
+	def __getitem__(self, slice):
+		s = slice[0]
+		if s in self.calls:
+			print("Cache hit")	
+			return self.mmap[self.calls.index(s)][slice[1:]]
+		else:
+			print("Cache miss")
+			r = self.load(s)
+			if len(self.calls) < self.maxsize:
+				self.calls.append(s)
+				self.times.append(time.time())
+				self.mmap[len(self.calls)-1] = r
+			else:
+				lr = np.argmin(self.times)
+				self.calls[lr] = s
+				self.times[lr] = time.time()
+				self.mmap[lr] = r
+			return r[slice[1:]]
+	
+	def getFrame(self, f):
+		return self[f,:,:]
+	
+	def load(self, s):
+		return cv2.imread(self.tifStack[s])
+	
+	def delete(self):
+		if hasattr(self.mmap, '_mmap'):
+			self.mmap._mmap.close()
+		del self.mmap
+		if os.path.exists(self.mmap_file):
+			os.remove(self.mmap_file)
 
 
 

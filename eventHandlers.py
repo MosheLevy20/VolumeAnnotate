@@ -59,7 +59,7 @@ class EventHandler(object):
             self.app.image.annotations[self.app._frame_index - 1]
         )
         self.app.image.interpolated[self.app._frame_index] = interpolatePoints(
-            self.app.image.annotations[self.app._frame_index], self.app.image.img.shape
+            self.app.image.annotations[self.app._frame_index], self.app.image.imshape
         )
 
         autoSave(self.app)
@@ -100,7 +100,7 @@ class EventHandler(object):
     #     #get 3D voxel data
     #     #create empty np array whose size is the boudning box of the interpolated
     #     #loop through all interpolated and set the corresponding voxels to 1
-    #     imshape = self.app.image.img.shape
+    #     imshape = self.app.image.imshape
     #     #zmin, zmax, xmin, xmax, ymin, ymax = getBoundingBox(self.app.image.interpolated, imshape)
     #     voxels = np.zeros((len(self.app.image.interpolated), imshape[0], imshape[1]))
     #     for i in range(len(self.app.image.interpolated)):
@@ -182,16 +182,24 @@ class EventHandler(object):
 
     def on_edge(self, event):
         # get the list of image names
-        imageNames = self.app._frame_list[
-            self.app._frame_index : min(
-                self.app._frame_index + self.app.edgeDepth, self.app._frame_count
-            )
-        ]
+        # imageNames = self.app._frame_list[
+        #     self.app._frame_index : min(
+        #         self.app._frame_index + self.app.edgeDepth, self.app._frame_count
+        #     )
+        # ]
+        currentEdge = self.app.image.annotations[self.app._frame_index]
+        if len(currentEdge) == 0:
+            return
+        imageIndices = list(range(
+            self.app._frame_index, min(
+            self.app._frame_index + self.app.edgeDepth, self.app._frame_count
+        )))
         # use findEdges to get the list of edges
         edges = findEdges(
-            self.app.image.annotations[self.app._frame_index],
-            imageNames,
+            currentEdge,
+            imageIndices,
             self.app.inkRadius,
+            self.app.TheData 
         )
 
         # add the edges as the annotations for the next edgeDepth frames
@@ -199,7 +207,7 @@ class EventHandler(object):
             # annotations is every n'th entry in interpolated, use slice notation
             self.app.image.annotations[self.app._frame_index + i] = edges[i]
             self.app.image.interpolated[self.app._frame_index + i] = interpolatePoints(
-                edges[i], self.app.image.img.shape
+                edges[i], self.app.image.imshape
             )
 
         # run ink detection on the new annotations
@@ -249,13 +257,13 @@ class EventHandler(object):
             )
             self.app.image.interpolated[self.app._frame_index] = interpolatePoints(
                 self.app.image.annotations[self.app._frame_index],
-                self.app.image.img.shape,
+                self.app.image.imshape,
             )
             #
             with open(self.app.sessionId, "wb") as f:
                 pickle.dump(self.app.image.annotations, f)
                 pickle.dump(self.app.image.interpolated, f)
-                pickle.dump(self.app.image.img.shape, f)
+                pickle.dump(self.app.image.imshape, f)
         else:
             print("Warning: Unrecognized key press")
 
@@ -276,7 +284,7 @@ class EventHandler(object):
             if len(self.app.image.annotations[self.app._frame_index]) > 1:
                 interped = interpolatePoints(
                     self.app.image.annotations[self.app._frame_index][-2:],
-                    self.app.image.img.shape,
+                    self.app.image.imshape,
                 )
                 self.app.image.interpolated[self.app._frame_index].extend(interped)
         elif self.app.mouseMode == "Label Ink":
@@ -356,7 +364,7 @@ class EventHandler(object):
                 self.app.image.annotations[self.app._frame_index].pop(closestIndex)
                 self.app.image.interpolated[self.app._frame_index] = interpolatePoints(
                     self.app.image.annotations[self.app._frame_index],
-                    self.app.image.img.shape,
+                    self.app.image.imshape,
                 )
         else:
             print(f"Warning: mouse mode not recognized: {self.app.mouseMode}")
@@ -381,7 +389,7 @@ class EventHandler(object):
                 ].y = (y - self.app.draggingOffset[1])
                 self.app.image.interpolated[self.app.draggingFrame] = interpolatePoints(
                     self.app.image.annotations[self.app.draggingFrame],
-                    self.app.image.img.shape,
+                    self.app.image.imshape,
                 )
 
         elif self.app.mouseMode == "Label Ink":

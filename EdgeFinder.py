@@ -29,16 +29,18 @@ def find_and_discard_small_edges(image, min_edge_length=100):
 
     return result_image
 
-def findEdges(initialEdge, filenameList, radius):
+def findEdges(initialEdge, imageIndices, radius, TheData):
     # Initialize the list of edge points with the initial edge
     allEdges = [initialEdge]
 
-    for i in range(1, len(filenameList)):
-        print(f"Processing image {i+1} of {len(filenameList)}")
-        currentFilename = filenameList[i]
+    for idx, i in enumerate(imageIndices):
+        print(f"Processing image {idx+1} of {len(imageIndices)}")
+       
 
         # Load the current image
-        currentImage = cv2.imread(currentFilename, cv2.IMREAD_GRAYSCALE)
+        currentImage = TheData.load(i).astype(np.uint8)
+        #convert to grayscale
+        currentImage = cv2.cvtColor(currentImage, cv2.COLOR_BGR2GRAY)
         # Increase contrast
         currentImage = cv2.convertScaleAbs(currentImage, alpha=2.5, beta=0)
 

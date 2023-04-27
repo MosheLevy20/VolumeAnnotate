@@ -23,6 +23,8 @@ class App(QWidget):
         self.volpkg = Volpkg(folder, sessionId0)
 
         self._frame_list = self.volpkg.tifstack
+        shape = cv2.imread(self._frame_list[0]).shape
+        self.TheData = Loader(shape, 3, "mmap_cache.mmap", self._frame_list)
         #self._frame_list = load_tif(folder)
 
         # set grid layout
@@ -42,7 +44,7 @@ class App(QWidget):
         self.frame_edit_display.setValidator(QIntValidator(1, self._frame_count + 1))
         # self.frame_edit_display.editingFinished.connect(self.on_frame_edited())
 
-        self.image = mImage(self._frame_list[0], len(self._frame_list))
+        self.image = mImage(self._frame_list[0], len(self._frame_list), self.TheData)
 
         ########################################################################
         ###################### Buttons and other widgets #######################
@@ -310,7 +312,7 @@ class App(QWidget):
         n = self.inkRadius
         # get the image
 
-        img = self.image.getProcImg(self._frame_list[index])
+        img = self.image.getProcImg(index=index)
         # get the interpolated points
         points = self.image.interpolated[index]
         # loop through all points
@@ -339,7 +341,7 @@ class App(QWidget):
                 points[i].updateColor(1 - inkIdx)
 
     def _update_frame(self):
-        self.image.setImg(self._frame_list[self._frame_index])
+        self.image.setImg(self._frame_index)
         self.frame_number.setText(f"Frame: {self._frame_index+1}/{self._frame_count}")
 
         self._update_image()
@@ -347,6 +349,7 @@ class App(QWidget):
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
         # self.image.showAnnotations(pmap, self._frame_index)
+        
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):
