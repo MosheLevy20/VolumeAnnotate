@@ -9,3 +9,6 @@ __pycache__/
 # Ignore Visual Studio and Visual Studio Code folders
 .vs/
 .vscode/
+
+# The autosave files that VolumeAnnotator produces
+*.pkl

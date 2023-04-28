@@ -1,5 +1,7 @@
 #requirements
 numpy
 opencv-python
+tifffile
+zarr
 PyQt5
 

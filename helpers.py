@@ -4,6 +4,9 @@ import pickle
 import cv2
 import time
 import os
+import tifffile
+import zarr
+from collections import namedtuple
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -65,18 +68,37 @@ class Point(object):
 		self.color = getColor(colorIdx)
 
 def load_tif(path):
-	tif = []
-	for filename in os.listdir(path):
-		# check if digit in filename
-		if (filename.endswith(".tif") or filename.endswith(".png")) and any(
-			char.isdigit() for char in filename
-		):
-			tif.append(path + "/" + filename)
-	# sort the list by the number in the filename
-	tif.sort(key=lambda f: int("".join(filter(str.isdigit, f))))
-	# tif = sorted(tif)
-	print(tif)
-	return tif
+	"""This function will take a path to a folder that contains a stack of .tif
+	files and returns a concatenated 3D zarr array that will allow access to an
+	arbitrary region of the stack.
+
+	We support two different styles of .tif stacks.  The first are simply
+	numbered filenames, e.g., 00.tif, 01.tif, 02.tif, etc.  In this case, the
+	numbers are taken as the index into the zstack, and we assume that the zslices
+	are fully continuous.
+
+	The second follows @spelufo's reprocessing, and are not 2D images but 3D cells
+	of the data.  These should be labeled
+
+	cell_yxz_YINDEX_XINDEX_ZINDEX
+
+	where these provide the position in the Y, X, and Z grid of cuboids that make
+	up the image data.
+	"""
+	# Get a list of .tif files
+	tiffs = [filename for filename in os.listdir(path) if filename.endswith(".tif")]
+	if all([filename[:-4].isnumeric() for filename in tiffs]):
+		# This looks like a set of z-level images
+		# TODO: double-check that we have all numbered images from 0 to N
+		store = tifffile.imread(os.path.join(path, "*.tif"), aszarr=True)
+	elif all([filename.startswith("cell_yxz_") for filename in tiffs]):
+		# This looks like a set of cell cuboid images
+		images = tifffile.TiffSequence(os.path.join(path, "*.tif"), pattern=r"cell_yxz_(\d+)_(\d+)_(\d+)")
+		store = images.aszarr(axestiled={0: 1, 1: 2, 2: 0})
+	stack_array = zarr.open(store, mode="r")
+	return stack_array, tiffs
+
+
 class Volpkg(object):
 	def __init__(self, folder, sessionId0):
 		if folder.endswith(".volpkg") or os.path.exists(folder+".volpkg"):
@@ -87,14 +109,13 @@ class Volpkg(object):
 			volumes = [i for i in volumes if not i.startswith(".")]
 			volume = volumes[0] #should switch to a dialog to select volume
 			self.volume = volume
-			self.tifstack = load_tif(f"{self.basepath}/volumes/{volume}")
+			self.img_array, self.tifstack = load_tif(f"{self.basepath}/volumes/{volume}")
 			self.segmentations = None #TODO
-			#pass
 		else:
 			self.basepath = folder+".volpkg"
 			#make volpkg folder
 			os.mkdir(self.basepath)
-			self.tifstack = load_tif(folder)
+			self.img_array, self.tifstack = load_tif(folder)
 			#copy tifstack to volumes folder
 			os.mkdir(f"{self.basepath}/volumes")
 			#volume name
@@ -103,8 +124,6 @@ class Volpkg(object):
 				#use cp command
 				os.system(f"cp {tif} {self.basepath}/volumes/{sessionId0}/{i}.tif")
 			
-			
-
 			self.segmentations = None
 			
 	def saveVCPS(self, file_name, annotations, imshape, ordered=True, point_type='float', encoding='utf-8'):
@@ -151,8 +170,6 @@ class Volpkg(object):
 		with open(f"{self.basepath}/paths/{file_name}/meta.json", 'w') as file:
 			json.dump(meta, file)
 
-		
-
 
 	def stripAnnoatation(self, annotationsRaw, imshape):
 		interpolated = [i for i in annotationsRaw if len(i) > 0]
@@ -185,58 +202,222 @@ class Volpkg(object):
 			
 					
 					im[i, W - (centerIndex-jindex)] = [x,y,i]
-			
-	
-			
 		return im
 
 
-
 class Loader:
-	def __init__(self, shape, maxsize, mmap_file, tifStack):
-		self.numcalls = 0
-		self.shape = shape
-		self.maxsize = maxsize
-		self.mmap_file = mmap_file
-		self.mmap = np.zeros(dtype=np.float64, shape=(maxsize, *shape))
-		self.calls = []
-		self.times = []
-		self.tifStack = tifStack
+	"""Provides a cached interface to the data.
 	
-	#overload index operator
-	def __getitem__(self, slice):
-		s = slice[0]
-		if s in self.calls:
-			print("Cache hit")	
-			return self.mmap[self.calls.index(s)][slice[1:]]
+	When provided with z, x, and y slices, queries whether that
+	data is available from any previously cached data.  If it
+	is, returns the subslice of that cached data that contains
+	the data we need.  
+	
+	If it isn't, then we:
+	- clear out the oldest cached data if we need space
+	- load the data we need, plus some padding
+		- padding depends on the chunking of the zarr array and the
+		  size of the data loaded
+	- store that data in our cache, along with the access time.
+
+	The cache is a dictionary, indexed by a namedtuple of
+	slice objects (zslice, xslice, yslice), that provides a
+	dict of 
+	{"accesstime": last access time, "array": numpy array with data}
+	"""
+
+	def __init__(self, zarr_array, max_mem_gb=3):
+		self.shape = zarr_array.shape
+		print("Data array shape: ", self.shape)
+		self.cache = {}
+		self.zarr_array = zarr_array
+		self.max_mem_gb = max_mem_gb
+		chunk_shape = self.zarr_array.chunks
+		if chunk_shape[0] == 1:
+			self.chunk_type = "zstack"
 		else:
-			print("Cache miss")
-			r = self.load(s)
-			if len(self.calls) < self.maxsize:
-				self.calls.append(s)
-				self.times.append(time.time())
-				self.mmap[len(self.calls)-1] = r
+			self.chunk_type = "cuboid"
+
+
+	def _check_slices(self, cache_slice, new_slice, length):
+		"""Queries whether a new slice's data is contained
+		within an older slice.
+		
+		Note we don't handle strided slices.
+		"""
+		if isinstance(new_slice, int):
+			new_start = new_slice
+			new_stop = new_slice + 1
+		else:
+			new_start = 0 if new_slice.start is None else new_slice.start
+			new_stop = length if new_slice.stop is None else new_slice.stop
+		if isinstance(cache_slice, int):
+			cache_start = cache_slice
+			cache_stop = cache_slice + 1
+		else:
+			cache_start = 0 if cache_slice.start is None else cache_slice.start
+			cache_stop = length if cache_slice.stop is None else cache_slice.stop
+		if (new_start >= cache_start) and (new_stop <= cache_stop):
+			# New slice should be the slice in the cached data that gives the request
+			if isinstance(new_slice, int):
+				return new_start - cache_start
 			else:
-				lr = np.argmin(self.times)
-				self.calls[lr] = s
-				self.times[lr] = time.time()
-				self.mmap[lr] = r
-			return r[slice[1:]]
-	
-	def getFrame(self, f):
-		return self[f,:,:]
-	
-	def load(self, s):
-		return cv2.imread(self.tifStack[s])
-	
-	def delete(self):
-		if hasattr(self.mmap, '_mmap'):
-			self.mmap._mmap.close()
-		del self.mmap
-		if os.path.exists(self.mmap_file):
-			os.remove(self.mmap_file)
+				return slice(
+					new_start - cache_start,
+					new_stop - cache_start,
+					None
+				)
+		else:
+			return None
 
+	def check_cache(self, zslice, xslice, yslice):
+		"""Looks through the cache to see if any cached data
+		can provide the data we need.
+		"""
+		for key in self.cache.keys():
+			cache_zslice = hashable_to_slice(key[0])
+			cache_xslice = hashable_to_slice(key[1])
+			cache_yslice = hashable_to_slice(key[2])
+			sub_zslice = self._check_slices(cache_zslice, zslice, self.shape[0])
+			sub_xslice = self._check_slices(cache_xslice, xslice, self.shape[1])
+			sub_yslice = self._check_slices(cache_yslice, yslice, self.shape[2])
+			if sub_zslice is None or sub_xslice is None or sub_yslice is None:
+				continue
+			# At this point we have a valid slice to index into this subarray.
+			# Update the access time and return the array.
+			self.cache[key]["accesstime"] = time.time()
+			return self.cache[key]["array"][sub_zslice, sub_xslice, sub_yslice]
+		return None
+	
+	@property
+	def cache_size(self):
+		total_mem_gb = 0
+		for _, data in self.cache.items():
+			total_mem_gb += data["array"].nbytes / 1e9
+		return total_mem_gb
+	
+	def empty_cache(self):
+		"""Removes the oldest item in the cache to free up memory.
+		"""
+		if not self.cache:
+			return
+		oldest_time = None
+		oldest_key = None
+		for key, value in self.cache.items():
+			if oldest_time is None or value["accesstime"] < oldest_time:
+				oldest_time = value["accesstime"]
+				oldest_key = key
+		del self.cache[oldest_key]
+	
+	def estimate_slice_size(self, zslice, xslice, yslice):
+		def slice_size(s, l):
+			if isinstance(s, int):
+				return 1
+			elif isinstance(s, slice):
+				s_start = 0 if s.start is None else s.start
+				s_stop = l if s.stop is None else s.stop
+				return s_stop - s_start
+			raise ValueError("Invalid index")
+		return (
+			self.zarr_array.dtype.itemsize * 
+			slice_size(zslice, self.shape[0]) *
+			slice_size(xslice, self.shape[1]) * 
+			slice_size(yslice, self.shape[2])
+		) / 1e9
 
+	def pad_request(self, zslice, xslice, yslice):
+		"""Takes a requested slice that is not loaded in memory
+		and pads it somewhat so that small movements around the
+		requested area can be served from memory without hitting
+		disk again.
+
+		For zstack data, prefers padding in xy, while for cuboid
+		data, prefers padding in z.
+		"""
+		def pad_slice(old_slice, length, int_add=1):
+			if isinstance(old_slice, int):
+				if length == 1:
+					return old_slice
+				return slice(
+					max(0, old_slice - int_add),
+					min(length, old_slice + int_add + 1),
+					None
+				)
+			adj_width = (old_slice.stop - old_slice.start) // 2 + 1
+			return slice(
+				max(0, old_slice.start - adj_width),
+				min(length, old_slice.stop + adj_width),
+				None
+			)
+		est_size = self.estimate_slice_size(zslice, xslice, yslice)
+		if (3 * est_size) >= self.max_mem_gb:
+			# No padding; the array's already larger than the cache.
+			return zslice, xslice, yslice
+		if self.chunk_type == "zstack":
+			# First pad in X and Y, then Z
+			xslice = pad_slice(xslice, self.shape[1])
+			est_size = self.estimate_slice_size(zslice, xslice, yslice)
+			if (3 * est_size) >= self.max_mem_gb:
+				return zslice, xslice, yslice
+			yslice = pad_slice(yslice, self.shape[2])
+			est_size = self.estimate_slice_size(zslice, xslice, yslice)
+			if (3 * est_size) >= self.max_mem_gb:
+				return zslice, xslice, yslice
+			zslice = pad_slice(zslice, self.shape[0])
+		elif self.chunk_type == "cuboid":
+			# First pad in Z by 5 in each direction if we have space, then in XY
+			zslice = pad_slice(
+				zslice, 
+				self.shape[0], 
+				int_add=min(5, self.max_mem_gb // (2 * est_size))
+			)
+			est_size = self.estimate_slice_size(zslice, xslice, yslice)
+			if (3 * est_size) >= self.max_mem_gb:
+				return zslice, xslice, yslice
+			xslice = pad_slice(xslice, self.shape[1])
+			est_size = self.estimate_slice_size(zslice, xslice, yslice)
+			if (3 * est_size) >= self.max_mem_gb:
+				return zslice, xslice, yslice
+			yslice = pad_slice(yslice, self.shape[2])
+		return zslice, xslice, yslice
+
+	def __getitem__(self, key):
+		"""Overloads the slicing operator to get data with caching
+		"""
+		zslice, xslice, yslice = key
+		for item in (zslice, xslice, yslice):
+			if isinstance(item, slice) and item.step is not None:
+				raise ValueError("Sorry, we don't support strided slices yet")
+		# First check if we have the requested data already in memory
+		result = self.check_cache(zslice, xslice, yslice)
+		if result is not None:
+			return result
+		# Pad out the requested slice before we pull it from disk
+		# so that we cache neighboring data in memory to avoid
+		# repeatedly hammering the disk
+		padded_zslice, padded_xslice, padded_yslice = self.pad_request(zslice, xslice, yslice)
+		est_size = self.estimate_slice_size(padded_zslice, padded_xslice, padded_yslice)
+		# Clear out enough space from the cache that we can fit the new
+		# request within our memory limits.
+		while self.cache and (self.cache_size + est_size) > self.max_mem_gb:
+			self.empty_cache()
+		self.cache[(
+			slice_to_hashable(padded_zslice),
+			slice_to_hashable(padded_xslice),
+			slice_to_hashable(padded_yslice),
+		)] = {
+			"accesstime": time.time(),
+			"array": self.zarr_array[padded_zslice, padded_xslice, padded_yslice],
+		}
+		result = self.check_cache(zslice, xslice, yslice)
+		assert result is not None
+		return result
+
+def slice_to_hashable(slice):
+	return (slice.start, slice.stop)
+
+def hashable_to_slice(item):
+	return slice(item[0], item[1], None)
 
 #under development
 # class VoxelViewer(QMainWindow):
