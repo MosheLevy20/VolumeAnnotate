@@ -281,13 +281,6 @@ class App(QWidget):
             self.image.getImg(self._frame_index)
         self.panLen = self.image.img.width() / 5
 
-        self.pixelSize0 = (
-            self.image.shape[0] / self.image.img.height()
-        )
-        self.pixelSize1 = (
-            self.image.shape[1] / self.image.img.width()
-        )
-
         self.show()
 
         self.dragging = False
@@ -341,6 +334,13 @@ class App(QWidget):
 
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
+        self.pixelSize0 = (
+            int(self.image.imshape[0] * self.image.scale) / self.image.img.height()
+        )
+        self.pixelSize1 = (
+            int(self.image.imshape[1] * self.image.scale) / self.image.img.width()
+        )
+        #print(self.pixelSize0, self.pixelSize1)
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):
