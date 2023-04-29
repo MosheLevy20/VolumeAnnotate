@@ -343,10 +343,12 @@ class Loader:
 					min(length, old_slice + int_add + 1),
 					None
 				)
-			adj_width = (old_slice.stop - old_slice.start) // 2 + 1
+			start = old_slice.start if old_slice.start is not None else 0
+			stop = old_slice.stop if old_slice.stop is not None else length
+			adj_width = (stop - start) // 2 + 1
 			return slice(
-				max(0, old_slice.start - adj_width),
-				min(length, old_slice.stop + adj_width),
+				max(0, start - adj_width),
+				min(length, stop + adj_width),
 				None
 			)
 		est_size = self.estimate_slice_size(zslice, xslice, yslice)
@@ -530,6 +532,7 @@ def autoSave(app, file_name=None):
 	with open(f"{file_name}.pkl", 'wb') as f:
 		pickle.dump(app.image.annotations, f)
 		pickle.dump(app.image.interpolated, f)
-		pickle.dump(app.image.img.shape, f)
+		pickle.dump(app.image.imshape, f)
 	#save annotations to vcp file
-	app.volpkg.saveVCPS(app.sessionId0, app.image.interpolated, app.image.img.shape)
+	# TODO: resolve volpkg issues
+	# app.volpkg.saveVCPS(app.sessionId0, app.image.interpolated, app.image.imshape)
