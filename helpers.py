@@ -195,10 +195,11 @@ class Volpkg(object):
 
 class Loader:
 	def __init__(self, tifStack):
-		self.mappings = []
+		self.mappings = dict()
 		self.tifStack = tifStack
 		for f in sorted(tifStack):
-			self.mappings.append(tifffile.memmap(f, mode='r'))
+			idx = int(os.path.basename(f).split('.')[0])
+			self.mappings[idx] = tifffile.memmap(f, mode='r')
 
 	#overload index operator
 	def __getitem__(self, slice):
