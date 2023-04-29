@@ -76,6 +76,7 @@ class mImage(object):
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
 		img = self.normalize_image(img=img)
 		if show_annotations:
+			print(self.annotations[frame_index])
 			for an in self.annotations[frame_index]:
 				an.show(img, self.annotationRadius, True, x0, y0, self.scale)
 			for an in self.interpolated[frame_index]:
@@ -83,7 +84,7 @@ class mImage(object):
 		#resize the image by interpolation
 		img = cv2.resize(img, (self.display_height, self.display_width))
 		#convert to pixmap
-		qimg = QImage(img, img.shape[1], img.shape[0], QImage.Format_Grayscale16)
+		qimg = QImage(img, img.shape[1], img.shape[0], QImage.Format_RGB888)
 		pixmap = QPixmap.fromImage(qimg)
 		self.img = pixmap
 		return pixmap
@@ -94,7 +95,14 @@ class mImage(object):
 			img = self.img_loader[0,:,:]
 		if self.invert:
 			img = cv2.bitwise_not(img)
-		return (img * (self.contrast / 5) + 100).astype(np.uint16)
+		# Incoming should be a single array of uint16s.
+		# We need to convert to a stacked copy of uint8s to display as RGB.
+		img = cv2.convertScaleAbs(
+			(img / (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)).astype(np.uint8), 
+			alpha=self.contrast/5, 
+			beta=100
+		)
+		return np.stack([img, img, img], axis=2)
 
 	def get2DImage(self, app):
 		"""Unwraps the active annotations.
