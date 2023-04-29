@@ -207,7 +207,7 @@ class EventHandler(object):
             currentEdge,
             imageIndices,
             self.app.inkRadius,
-            self.app.TheData 
+            self.app.loader 
         )
 
         # add the edges as the annotations for the next edgeDepth frames
