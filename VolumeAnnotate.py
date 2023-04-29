@@ -340,7 +340,6 @@ class App(QWidget):
         self.pixelSize1 = (
             int(self.image.imshape[1] * self.image.scale) / self.image.img.width()
         )
-        #print(self.pixelSize0, self.pixelSize1)
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):
