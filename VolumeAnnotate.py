@@ -18,7 +18,7 @@ class App(QWidget):
         self.sessionId0 = sessionId0
         # set to full screen
         # self.showFullScreen()
-        print(folder)
+        print(f"Loading image folder {folder}")
         #self.volpkg = Volpkg(folder, sessionId0)
         #self.loader = Loader(self.volpkg.img_array, max_mem_gb=3)
         img_array, _ = load_tif(folder)
@@ -334,12 +334,8 @@ class App(QWidget):
 
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
-        self.pixelSize0 = (
-            int(self.image.imshape[0] * self.image.scale) / self.image.img.height()
-        )
-        self.pixelSize1 = (
-            int(self.image.imshape[1] * self.image.scale) / self.image.img.width()
-        )
+        self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
+        self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):

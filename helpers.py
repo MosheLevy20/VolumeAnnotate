@@ -6,7 +6,6 @@ import time
 import os
 import tifffile
 import zarr
-from collections import namedtuple
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -22,12 +21,18 @@ class Point(object):
 	def __init__(self, x, y, colorIdx=0, size=3):
 		self.colorIdx = colorIdx
 		color = getColor(colorIdx)
+		# These points are generated using getRelCoords, meaning
+		# that x and y are measured as fractions of the whole image from
+		# the upper left corner (0, 0) of the image.
 		self.x = x
 		self.y = y
 	 
 		self.color = color
 		self.size = size
 	
+	def __repr__(self):
+		return f"X {self.x} Y {self.y} S {self.size}"
+
 	def __add__(self, other):
 		return Point(self.x+other.x, self.y+other.y)
 	
@@ -37,7 +42,6 @@ class Point(object):
 	def __mul__(self, scalar):
 		return Point(self.x*scalar, self.y*scalar)
 
-	#subscripting
 	def __getitem__(self, key):
 		if key == 0:
 			return self.x
@@ -54,14 +58,13 @@ class Point(object):
 		else:
 			raise IndexError("Point index out of range")
 
-
-	def show(self, arr, size, node, x0,y0,scale):
+	def show(self, arr, img_shape, size, node, x0, y0, scale):
 		if node:
 			size *= 2
 		#draws point to copy of the current frame
-		x = int((self.x*arr.shape[1])/scale)-x0
-		y = int((self.y*arr.shape[0])/scale)-y0
-		cv2.circle(arr, (x,y), size, self.color, -1)
+		local_x = int(self.x * img_shape[0]) - y0
+		local_y = int(self.y * img_shape[1]) - x0
+		cv2.circle(arr, (local_x, local_y), size, self.color, -1)
 	
 	def updateColor(self, colorIdx):
 		self.colorIdx = colorIdx
@@ -488,41 +491,54 @@ def interpolatePoints(points, imShape):
 	return interp
 
 
-
-#get the coordinates of the mouse relative to the image frame
 def getImFrameCoords(app, pos):
+	"""Returns the coordinates of the mouse reported as a fraction
+	of the way through the image frame.
+	"""
 	pos = getUnscaledRelCoords(app, pos)
 	image_rect = app.label.pixmap().rect()
-	x = pos.x()/image_rect.width()
-	y = pos.y()/image_rect.height()
+	x = pos.x() / image_rect.width()
+	y = pos.y() / image_rect.height()
 	return x,y
 
 #get the coordinates of the mouse relative to the full image
 def getRelCoords(app, pos):
+	"""Returns the coordinates of the mouse reported as a fraction
+	of the way through the full image.
+
+	Note that the full image may not be currently displayed, so we have
+	to adjust the location appropriately.
+	"""
 	pos = getUnscaledRelCoords(app, pos)
-	image_rect = app.label.pixmap().rect()
-	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
-	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
-	x /= image_rect.width()
-	y /= image_rect.height()
+	x = pos.x() * app.pixelSize1 + app.image.offset[1]
+	y = pos.y() * app.pixelSize0 + app.image.offset[0]
+	x /= app.image.imshape[1]
+	y /= app.image.imshape[0]
 	return x,y
 
-#get the coordinates of the mouse, shifting the origin to the top left corner of the image
+
 def getUnscaledRelCoords(app, pos):
+	"""Takes the mouse position and returns the x, y coordinates represented
+	as the pixel distance from the upper left corner of the image.
+	"""
 	label_pos = app.label.pos()
 	image_rect = app.label.pixmap().rect()
-	image_pos = QPoint(int(label_pos.x() + (app.label.width() - image_rect.width()) / 2),int(label_pos.y() + (app.label.height() - image_rect.height()) / 2))
-	#get pos relative to image 
+	# image_pos here is the pixel position of the upper left corner of the image
+	# inside the QT application
+	image_pos = QPoint(
+		int(label_pos.x() + (app.label.width() - image_rect.width()) / 2),
+		int(label_pos.y() + (app.label.height() - image_rect.height()) / 2),
+	)
+	#get pos relative to image
 	pos = pos - image_pos
 	return pos
+
 
 #get pixel coordinates from relative coordinates
 def getPixelCoords(imShape, x, y):
 	x = int(x*imShape[1])
 	y = int(y*imShape[0])
 	return x,y
-
-
 	
 
 def autoSave(app, file_name=None):

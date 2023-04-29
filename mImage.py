@@ -6,11 +6,11 @@ from PyQt5.QtGui import QPixmap, QImage
 class mImage(object):
 	def __init__(self, frame_count, img_loader, display_size=800):
 		self.img_loader = img_loader
-		# On init, we load the first z-level of the entire area to display.
-		# self.img = self.img_loader[0,:,:]
 		# N.B. this is z, x, y
 		self.shape = self.img_loader.shape
 		self.imshape = self.shape[1:]
+		self.loaded_shape = None
+		# This will hold the pixmap once loaded
 		self.img = None
 	
 		maxDim = np.argmax(self.imshape)
@@ -71,14 +71,14 @@ class mImage(object):
 		y0 = int(self.offset[1])
 		x1 = int(self.imshape[0]*self.scale)
 		y1 = int(self.imshape[1]*self.scale)
+		self.loaded_shape = (x1, y1)
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
 		img = self.normalize_image(img=img)
 		if show_annotations:
-			print(self.annotations[frame_index])
 			for an in self.annotations[frame_index]:
-				an.show(img, self.annotationRadius, True, x0, y0, self.scale)
+				an.show(img, self.imshape, self.annotationRadius, True, x0, y0, self.scale)
 			for an in self.interpolated[frame_index]:
-				an.show(img, self.annotationRadius, False, x0, y0, self.scale)
+				an.show(img, self.imshape, self.annotationRadius, False, x0, y0, self.scale)
 		#resize the image by interpolation
 		img = cv2.resize(img, (self.display_height, self.display_width))
 		#convert to pixmap
