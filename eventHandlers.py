@@ -446,7 +446,7 @@ class EventHandler(object):
                 self.app.image.pan(
                     np.array(
                         [
-                            delta.y() * self.app.pixelSize0,
+                            delta.y() * self.app.pixelSize1,
                             delta.x() * self.app.pixelSize0,
                         ]
                     )
