@@ -2,10 +2,9 @@
 import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
-import copy
 
 class mImage(object):
-	def __init__(self, frame_count, img_loader, display_size=800, pixelSize=1):
+	def __init__(self, frame_count, img_loader, display_size=800):
 		self.img_loader = img_loader
 		# On init, we load the first z-level of the entire area to display.
 		# self.img = self.img_loader[0,:,:]
@@ -14,7 +13,6 @@ class mImage(object):
 		self.imshape = self.shape[1:]
 		self.img = None
 	
-		self.pixelSize = pixelSize
 		maxDim = np.argmax(self.imshape)
 		if maxDim == 0:
 			self.display_width = display_size
