@@ -23,9 +23,7 @@ class App(QWidget):
         self.volpkg = Volpkg(folder, sessionId0)
 
         self._frame_list = self.volpkg.tifstack
-        shape = cv2.imread(self._frame_list[0]).shape
-        self.TheData = Loader(shape, 3, "mmap_cache.mmap", self._frame_list)
-        #self._frame_list = load_tif(folder)
+        self.TheData = Loader(self._frame_list)
 
         # set grid layout
         self.layout = QGridLayout()

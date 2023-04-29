@@ -2,4 +2,4 @@
 numpy
 opencv-python
 PyQt5
-
+tifffile

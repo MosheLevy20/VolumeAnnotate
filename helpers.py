@@ -11,6 +11,7 @@ from PyQt5.QtCore import *
 # import pyvista as pv
 import struct
 import json
+import tifffile
 
 #TODO: figure out step size generally (including non square images)
 
@@ -193,48 +194,20 @@ class Volpkg(object):
 
 
 class Loader:
-	def __init__(self, shape, maxsize, mmap_file, tifStack):
-		self.numcalls = 0
-		self.shape = shape
-		self.maxsize = maxsize
-		self.mmap_file = mmap_file
-		self.mmap = np.zeros(dtype=np.float64, shape=(maxsize, *shape))
-		self.calls = []
-		self.times = []
+	def __init__(self, tifStack):
+		self.mappings = []
 		self.tifStack = tifStack
-	
+		for f in sorted(tifStack):
+			self.mappings.append(tifffile.memmap(f, mode='r'))
+
 	#overload index operator
 	def __getitem__(self, slice):
 		s = slice[0]
-		if s in self.calls:
-			print("Cache hit")	
-			return self.mmap[self.calls.index(s)][slice[1:]]
-		else:
-			print("Cache miss")
-			r = self.load(s)
-			if len(self.calls) < self.maxsize:
-				self.calls.append(s)
-				self.times.append(time.time())
-				self.mmap[len(self.calls)-1] = r
-			else:
-				lr = np.argmin(self.times)
-				self.calls[lr] = s
-				self.times[lr] = time.time()
-				self.mmap[lr] = r
-			return r[slice[1:]]
-	
+		return self.mappings[s][slice[1:]]
+
 	def getFrame(self, f):
 		return self[f,:,:]
-	
-	def load(self, s):
-		return cv2.imread(self.tifStack[s])
-	
-	def delete(self):
-		if hasattr(self.mmap, '_mmap'):
-			self.mmap._mmap.close()
-		del self.mmap
-		if os.path.exists(self.mmap_file):
-			os.remove(self.mmap_file)
+
 
 
 

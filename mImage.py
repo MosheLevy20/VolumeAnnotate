@@ -119,13 +119,11 @@ class mImage(object):
 		x0 = int(self.offset[0])
 		y0 = int(self.offset[1])
 
-		
-
 		x1 = int(self.imshape[0]*self.scale)
 		y1 = int(self.imshape[1]*self.scale)
-		img = self.TheData[frame_index, x0:x1+x0, y0:y0+y1]
 
-		img = self.getProcImg(img)
+		img = self.getProcImg(index=frame_index)
+		img = img[x0:x1+x0, y0:y0+y1]
 		if show_annotations:
 			self.showAnnotations(img, frame_index, y0, x0, self.scale)
 		#resize the image by interpolation
@@ -134,26 +132,24 @@ class mImage(object):
 		
 		#CONVERT to pixmap
 		data = img
-		bytesperline = 3 * data.shape[1]
+		bytesperline = data.shape[1]
 
-		qimg = QImage(data, data.shape[1], data.shape[0], bytesperline, QImage.Format_RGB888)
+		qimg = QImage(data, data.shape[1], data.shape[0], bytesperline, QImage.Format_Grayscale8)
 
 		pixmap = QPixmap.fromImage(qimg)
 		return pixmap
 
 
 	def getProcImg(self, img=None, index=None):
-		if index != None:
+		if img is None:
 			img = self.TheData.getFrame(index)
-
-	
+		img = np.copy(img)
+		img //=255
+		img = img.astype(np.uint8)
 		#invert the image
 		if self.invert:
 			img = cv2.bitwise_not(img)
 		# #apply contrast filter
 		img = cv2.convertScaleAbs(img, alpha=self.contrast/5,beta=100)
-		
 		return img
 	
-
-
