@@ -8,7 +8,7 @@ from eventHandlers import *
 sessionId0 = time.strftime("%Y%m%d%H%M%S") 
 sessionId = sessionId0 + "autosave.pkl"
 
-
+VOLPKG = False
 
 class App(QWidget):
     def __init__(self, *args, **kwargs):
@@ -20,9 +20,11 @@ class App(QWidget):
         # set to full screen
         # self.showFullScreen()
         print(folder)
-        self.volpkg = Volpkg(folder, sessionId0)
-
-        self._frame_list = self.volpkg.tifstack
+        if VOLPKG:
+            self.volpkg = Volpkg(folder, sessionId0)
+            self._frame_list = self.volpkg.tifstack
+        else:
+            self._frame_list = load_tif(folder)
         self.TheData = Loader(self._frame_list)
 
         # set grid layout
