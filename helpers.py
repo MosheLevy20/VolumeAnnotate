@@ -249,8 +249,8 @@ class Loader:
 			new_start = new_slice
 			new_stop = new_slice + 1
 		else:
-			new_start = 0 if new_slice.start is None else new_slice.start
-			new_stop = length if new_slice.stop is None else new_slice.stop
+			new_start = 0 if new_slice.start is None else max(0, new_slice.start)
+			new_stop = length if new_slice.stop is None else min(length, new_slice.stop)
 		if isinstance(cache_slice, int):
 			cache_start = cache_slice
 			cache_stop = cache_slice + 1
@@ -410,7 +410,12 @@ class Loader:
 			"array": self.zarr_array[padded_zslice, padded_xslice, padded_yslice],
 		}
 		result = self.check_cache(zslice, xslice, yslice)
-		assert result is not None
+		if result is None:
+			# We shouldn't get cache misses!
+			print("Unexpected cache miss")
+			print(zslice, xslice, yslice)
+			print(padded_zslice, padded_xslice, padded_yslice)
+			raise ValueError("Cache miss after cache loading")
 		return result
 
 def slice_to_hashable(slice):

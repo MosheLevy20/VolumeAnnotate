@@ -278,7 +278,6 @@ class App(QWidget):
         #self.layout.addWidget(self.button_show_3D, 27, 1, 1, 2, Qt.AlignCenter)
         
         if self.image.img is None:
-            print("trace")
             self.image.getImg(self._frame_index)
         self.panLen = self.image.img.width() / 5
 
