@@ -74,7 +74,7 @@ class App(QWidget):
         self.button_save = QPushButton("Save Segment (.pkl)", self)
         self.button_save.clicked.connect(self.EH.on_save)
         # load annotations
-        self.button_load = QPushButton("Load Annotations (.pkl)", self)
+        self.button_load = QPushButton("Load Segment (.pkl)", self)
         self.button_load.clicked.connect(self.EH.on_load)
 
         # save as 2d mask
