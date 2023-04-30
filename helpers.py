@@ -511,10 +511,11 @@ def getRelCoords(app, pos):
 	to adjust the location appropriately.
 	"""
 	pos = getUnscaledRelCoords(app, pos)
-	x = pos.x() * app.pixelSize1 + app.image.offset[1]
-	y = pos.y() * app.pixelSize0 + app.image.offset[0]
-	x /= app.image.imshape[1]
-	y /= app.image.imshape[0]
+	image_rect = app.label.pixmap().rect()
+	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
+	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
+	x /= image_rect.width()
+	y /= image_rect.height()
 	return x,y
 
 

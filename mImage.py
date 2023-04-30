@@ -62,6 +62,7 @@ class mImage(object):
 		if y0 + doffset[1] + y1 > self.imshape[1]:
 			doffset[1] = self.imshape[1] - y0 - y1
 		self.offset += doffset*self.scale
+		
 	
 	###########################################################################
 

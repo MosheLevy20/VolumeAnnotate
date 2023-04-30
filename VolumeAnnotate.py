@@ -283,6 +283,9 @@ class App(QWidget):
 
         self.show()
 
+        self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
+        self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
+
         self.dragging = False
         self.draggingIndex = -1
         self.draggingPoint = None
@@ -334,8 +337,7 @@ class App(QWidget):
 
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
-        self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
-        self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
+        
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):
