@@ -62,8 +62,8 @@ class Point(object):
 		if node:
 			size *= 2
 		#draws point to copy of the current frame
-		local_x = int(self.x * img_shape[0]) - y0
-		local_y = int(self.y * img_shape[1]) - x0
+		local_x = int(self.x * img_shape[1]) - y0 
+		local_y = int(self.y * img_shape[0]) - x0
 		cv2.circle(arr, (local_x, local_y), size, self.color, -1)
 	
 	def updateColor(self, colorIdx):
