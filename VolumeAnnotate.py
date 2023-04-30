@@ -71,7 +71,7 @@ class App(QWidget):
         self.button_copy.clicked.connect(self.EH.on_copy)
 
         # save annotations
-        self.button_save = QPushButton("Save To volpkg", self)
+        self.button_save = QPushButton("Save Segment (.pkl)", self)
         self.button_save.clicked.connect(self.EH.on_save)
         # load annotations
         self.button_load = QPushButton("Load Annotations (.pkl)", self)

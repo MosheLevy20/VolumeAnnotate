@@ -545,9 +545,9 @@ def getPixelCoords(imShape, x, y):
 
 def autoSave(app, file_name=None):
 	if file_name == None:
-		file_name = app.sessionId0
+		file_name = app.sessionId
 	#save annotations to file
-	with open(f"{file_name}.pkl", 'wb') as f:
+	with open(f"{file_name}", 'wb') as f:
 		pickle.dump(app.image.annotations, f)
 		pickle.dump(app.image.interpolated, f)
 		pickle.dump(app.image.imshape, f)
