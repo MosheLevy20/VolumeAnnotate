@@ -92,8 +92,9 @@ def load_tif(path):
 	tiffs = [filename for filename in os.listdir(path) if filename.endswith(".tif")]
 	if all([filename[:-4].isnumeric() for filename in tiffs]):
 		# This looks like a set of z-level images
-		# TODO: double-check that we have all numbered images from 0 to N
-		store = tifffile.imread(os.path.join(path, "*.tif"), aszarr=True)
+		tiffs.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+		paths = [os.path.join(path, filename) for filename in tiffs]
+		store = tifffile.imread(paths, aszarr=True)
 	elif all([filename.startswith("cell_yxz_") for filename in tiffs]):
 		# This looks like a set of cell cuboid images
 		images = tifffile.TiffSequence(os.path.join(path, "*.tif"), pattern=r"cell_yxz_(\d+)_(\d+)_(\d+)")
