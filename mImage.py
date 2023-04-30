@@ -74,12 +74,15 @@ class mImage(object):
 		y1 = int(self.imshape[1]*self.scale)
 		self.loaded_shape = (x1, y1)
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
+		
 		img = self.normalize_image(img=img)
 		if show_annotations:
 			for an in self.annotations[frame_index]:
 				an.show(img, self.imshape, self.annotationRadius, True, x0, y0, self.scale)
 			for an in self.interpolated[frame_index]:
 				an.show(img, self.imshape, self.annotationRadius, False, x0, y0, self.scale)
+		
+		
 		#resize the image by interpolation
 		img = cv2.resize(img, (self.display_height, self.display_width))
 		#convert to pixmap
@@ -96,8 +99,12 @@ class mImage(object):
 			img = cv2.bitwise_not(img)
 		# Incoming should be a single array of uint16s.
 		# We need to convert to a stacked copy of uint8s to display as RGB.
+		if type(img[0,0]) == np.uint16:
+			f = (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)
+		else:
+			f = 1
 		img = cv2.convertScaleAbs(
-			(img / (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)).astype(np.uint8), 
+			(img / f).astype(np.uint8), 
 			alpha=self.contrast/5, 
 			beta=100
 		)
