@@ -1,4 +1,3 @@
-import os
 from mImage import mImage
 from helpers import *
 from eventHandlers import *
@@ -19,20 +18,18 @@ class App(QWidget):
         self.sessionId0 = sessionId0
         # set to full screen
         # self.showFullScreen()
-        print(folder)
-        self.volpkg = Volpkg(folder, sessionId0)
-
-        self._frame_list = self.volpkg.tifstack
-        shape = cv2.imread(self._frame_list[0]).shape
-        self.TheData = Loader(shape, 3, "mmap_cache.mmap", self._frame_list)
-        #self._frame_list = load_tif(folder)
+        print(f"Loading image folder {folder}")
+        #self.volpkg = Volpkg(folder, sessionId0)
+        #self.loader = Loader(self.volpkg.img_array, max_mem_gb=3)
+        img_array, _ = load_tif(folder)
+        self.loader = Loader(img_array, max_mem_gb=3)
 
         # set grid layout
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
         self._frame_index = 0
-        self._frame_count = len(self._frame_list)
+        self._frame_count = img_array.shape[0]
         # add text for frame number, non editable
         self.frame_number = QLabel(self)
         self.frame_number.setText(f"Frame {self._frame_index+1}/{self._frame_count}")
@@ -44,7 +41,10 @@ class App(QWidget):
         self.frame_edit_display.setValidator(QIntValidator(1, self._frame_count + 1))
         # self.frame_edit_display.editingFinished.connect(self.on_frame_edited())
 
-        self.image = mImage(self._frame_list[0], len(self._frame_list), self.TheData)
+        print("Initializing image")
+        self.label = QLabel(self)
+        self.image = mImage(self._frame_count, self.loader)
+        print("Image initialized")
 
         ########################################################################
         ###################### Buttons and other widgets #######################
@@ -71,10 +71,10 @@ class App(QWidget):
         self.button_copy.clicked.connect(self.EH.on_copy)
 
         # save annotations
-        self.button_save = QPushButton("Save To volpkg", self)
+        self.button_save = QPushButton("Save Segment (.pkl)", self)
         self.button_save.clicked.connect(self.EH.on_save)
         # load annotations
-        self.button_load = QPushButton("Load Annotations (.pkl)", self)
+        self.button_load = QPushButton("Load Segment (.pkl)", self)
         self.button_load.clicked.connect(self.EH.on_load)
 
         # save as 2d mask
@@ -211,8 +211,9 @@ class App(QWidget):
         ############################### Layout #################################
         ########################################################################
 
-        self.label = QLabel(self)
+        print("Setting pixmap")
         self.label.setPixmap(self.image.getImg(0))
+        print("Finished pixmap")
         # self.layout.rowStretch(2)#didn't work, try:
         self.layout.addWidget(self.label, 0, 0, 30, 1)
         self.layout.addWidget(self.button_zoom_in, 4, 2, Qt.AlignRight)
@@ -276,17 +277,14 @@ class App(QWidget):
 
         #self.layout.addWidget(self.button_show_3D, 27, 1, 1, 2, Qt.AlignCenter)
         
-
-        self.panLen = self.image.getImg(self._frame_index).width() / 5
-
-        self.pixelSize0 = (
-            self.image.img.shape[0] / self.image.getImg(self._frame_index).height()
-        )
-        self.pixelSize1 = (
-            self.image.img.shape[1] / self.image.getImg(self._frame_index).width()
-        )
+        if self.image.img is None:
+            self.image.getImg(self._frame_index)
+        self.panLen = self.image.img.width() / 5
 
         self.show()
+
+        self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
+        self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
 
         self.dragging = False
         self.draggingIndex = -1
@@ -297,14 +295,6 @@ class App(QWidget):
 
         self.clickState = 0
 
-        self.timer = QTimer(self)
-        # Set the time interval to 20 milliseconds (50 times per second)
-        self.timer.setInterval(20)
-        # Connect the timeout signal of the QTimer to the function that you want to call
-        self.timer.timeout.connect(self._update_image)
-        # Start the timer
-        self.timer.start()
-
     def update_ink(self, index=None):
         if index is None:
             index = self._frame_index
@@ -312,7 +302,7 @@ class App(QWidget):
         n = self.inkRadius
         # get the image
 
-        img = self.image.getProcImg(index=index)
+        img = self.image.normalize_image(index=index)
         # get the interpolated points
         points = self.image.interpolated[index]
         # loop through all points
@@ -341,14 +331,12 @@ class App(QWidget):
                 points[i].updateColor(1 - inkIdx)
 
     def _update_frame(self):
-        self.image.setImg(self._frame_index)
+        # self.image.setImg(self._frame_index)
         self.frame_number.setText(f"Frame: {self._frame_index+1}/{self._frame_count}")
-
         self._update_image()
 
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
-        # self.image.showAnnotations(pmap, self._frame_index)
         
         self.label.setPixmap(pmap)
 
@@ -364,14 +352,15 @@ class App(QWidget):
     def mouseReleaseEvent(self, event):
         return self.EH.mouseReleaseEvent(event)
     
-    
 
 
-        
+
+
 
 
 app = QApplication([])
 # on startup request folder
 folder = QFileDialog.getExistingDirectory(None, "Select Directory")
 win = App(folder=folder)
+print("App initialized")
 app.exec()

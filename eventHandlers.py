@@ -32,6 +32,7 @@ class EventHandler(object):
 
     def on_annotation_color_change(self, id):
         self.app.annotationColorIdx = id
+        self.app._update_image()
 
     def on_frame_change(self, event):
         input = self.app.frame_edit_display.text()
@@ -41,9 +42,11 @@ class EventHandler(object):
 
     def on_zoom_in(self, event):
         self.app.image.zoom(1 / 1.1)
+        self.app._update_image()
 
     def on_zoom_out(self, event):
         self.app.image.zoom(1.1)
+        self.app._update_image()
 
     def on_next_frame(self, event):
         self.app._frame_index = (self.app._frame_index + 1) % self.app._frame_count
@@ -61,7 +64,7 @@ class EventHandler(object):
         self.app.image.interpolated[self.app._frame_index] = interpolatePoints(
             self.app.image.annotations[self.app._frame_index], self.app.image.imshape
         )
-
+        self.app._update_image()
         autoSave(self.app)
 
     def on_save(self, event):
@@ -158,6 +161,7 @@ class EventHandler(object):
     def on_slider_change(self, event):
         self.app.inkThreshold = self.app.slider.value()
         self.app.update_ink()
+        self.app._update_image()
 
     def on_show_annotations(self, event):
         self.app.show_annotations = not self.app.show_annotations
@@ -166,6 +170,7 @@ class EventHandler(object):
             self.app.button_show_annotations.setText("Hide Annotations")
         else:
             self.app.button_show_annotations.setText("Show Annotations")
+        self.app._update_image()
 
     def on_slider_ink_radius_change(self, event):
         self.app.inkRadius = self.app.slider_ink_radius.value()
@@ -173,12 +178,15 @@ class EventHandler(object):
 
     def on_slider_annotation_radius_change(self, event):
         self.app.image.annotationRadius = self.app.slider_annotation_radius.value()
+        self.app._update_image()
 
     def on_slider_contrast_change(self, event):
         self.app.image.contrast = self.app.slider_contrast.value()
+        self.app._update_image()
 
     def on_invert(self, event):
         self.app.image.invert = not self.app.image.invert
+        self.app._update_image()
 
     def on_edge(self, event):
         # get the list of image names
@@ -199,7 +207,7 @@ class EventHandler(object):
             currentEdge,
             imageIndices,
             self.app.inkRadius,
-            self.app.TheData 
+            self.app.loader 
         )
 
         # add the edges as the annotations for the next edgeDepth frames
@@ -224,7 +232,7 @@ class EventHandler(object):
         # self.app.label_edge.setText(f"Edge Depth: {self.app.edgeDepth}")
 
     def keyPressEvent(self, event):
-        print(event.key())
+        #print(event.key())
         if event.key() == Qt.Key_Right:
             self.app._frame_index = (self.app._frame_index + 1) % self.app._frame_count
             self.app._update_frame()
@@ -237,19 +245,25 @@ class EventHandler(object):
             if self.app.image.scale < 0.11:
                 return
             self.app.image.zoom(1 / 1.1)
+            self.app._update_image()
         elif event.key() == Qt.Key_Down:
             if self.app.image.scale > 10:
                 return
             self.app.image.zoom(1.1)
+            self.app._update_image()
         # wasd for panning
         elif event.key() == Qt.Key_A:
             self.app.image.pan(np.array([0, -self.app.panLen]))
+            self.app._update_image()
         elif event.key() == Qt.Key_D:
             self.app.image.pan(np.array([0, self.app.panLen]))
+            self.app._update_image()
         elif event.key() == Qt.Key_W:
             self.app.image.pan(np.array([-self.app.panLen, 0]))
+            self.app._update_image()
         elif event.key() == Qt.Key_S:
             self.app.image.pan(np.array([self.app.panLen, 0]))
+            self.app._update_image()
         elif event.key() == Qt.Key_C:
             # copy previous frame annotations
             self.app.image.annotations[self.app._frame_index] = copy.deepcopy(
@@ -260,6 +274,7 @@ class EventHandler(object):
                 self.app.image.imshape,
             )
             #
+            self.app._update_image()
             with open(self.app.sessionId, "wb") as f:
                 pickle.dump(self.app.image.annotations, f)
                 pickle.dump(self.app.image.interpolated, f)
@@ -287,6 +302,7 @@ class EventHandler(object):
                     self.app.image.imshape,
                 )
                 self.app.image.interpolated[self.app._frame_index].extend(interped)
+            self.app._update_image()
         elif self.app.mouseMode == "Label Ink":
             if len(self.app.image.interpolated[self.app._frame_index]) == 0:
                 return
@@ -336,6 +352,7 @@ class EventHandler(object):
                 self.app.draggingOffset = np.array([x, y]) - np.array(
                     [closest.x, closest.y]
                 )
+            self.app._update_image()
 
         elif self.app.mouseMode == "Pan":
             self.app.panStart = getUnscaledRelCoords(self.app, event.pos())
@@ -366,6 +383,7 @@ class EventHandler(object):
                     self.app.image.annotations[self.app._frame_index],
                     self.app.image.imshape,
                 )
+            self.app._update_image()
         else:
             print(f"Warning: mouse mode not recognized: {self.app.mouseMode}")
 
@@ -391,6 +409,7 @@ class EventHandler(object):
                     self.app.image.annotations[self.app.draggingFrame],
                     self.app.image.imshape,
                 )
+            self.app._update_image()
 
         elif self.app.mouseMode == "Label Ink":
             if len(self.app.image.interpolated[self.app._frame_index]) == 0:
@@ -418,6 +437,7 @@ class EventHandler(object):
                     self.app.image.interpolated[self.app._frame_index][
                         closestIndex
                     ].updateColor(self.app.annotationColorIdx)
+                self.app._update_image()
 
         elif self.app.mouseMode == "Pan":
             if self.app.panning:
@@ -426,12 +446,13 @@ class EventHandler(object):
                 self.app.image.pan(
                     np.array(
                         [
-                            delta.y() * self.app.pixelSize0,
+                            delta.y() * self.app.pixelSize1,
                             delta.x() * self.app.pixelSize0,
                         ]
                     )
                 )
                 self.app.panStart = pos
                 self.app.panStartCoords = self.app.image.offset
+                self.app._update_image()
         else:
             print(f"Warning: mouse mode not recognized {self.app.mouseMode}")
