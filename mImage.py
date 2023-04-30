@@ -74,7 +74,10 @@ class mImage(object):
 		y1 = int(self.imshape[1]*self.scale)
 		self.loaded_shape = (x1, y1)
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
-		
+
+		# resize the image by interpolation
+		img = cv2.resize(img, (self.display_height, self.display_width))
+
 		img = self.normalize_image(img=img)
 		if show_annotations:
 			for an in self.annotations[frame_index]:
@@ -82,9 +85,6 @@ class mImage(object):
 			for an in self.interpolated[frame_index]:
 				an.show(img, self.imshape, self.annotationRadius, False, x0, y0, self.scale)
 		
-		
-		#resize the image by interpolation
-		img = cv2.resize(img, (self.display_height, self.display_width))
 		#convert to pixmap
 		qimg = QImage(img, img.shape[1], img.shape[0], QImage.Format_RGB888)
 		pixmap = QPixmap.fromImage(qimg)
