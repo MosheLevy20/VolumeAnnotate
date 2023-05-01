@@ -52,6 +52,7 @@ def findEdges(initialEdge, imageIndices, radius, loader):
 			beta=0
 		)
 
+
 		edges = find_and_discard_small_edges(currentImage, 50)
  
 		# Find the intersection of the edges with the previous edge
