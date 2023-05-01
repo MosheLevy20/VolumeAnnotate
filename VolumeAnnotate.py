@@ -135,6 +135,15 @@ class App(QWidget):
         # change contrast when slider is changed
         self.slider_contrast.valueChanged.connect(self.EH.on_slider_contrast_change)
 
+        # slider for brightness
+        self.slider_brightness = QSlider(Qt.Horizontal, self)
+        self.slider_brightness.setMinimum(0)
+        self.slider_brightness.setMaximum(255)
+        self.slider_brightness.setValue(127)
+        # change brightness when slider is changed
+        self.slider_brightness.valueChanged.connect(self.EH.on_slider_brightness_change)
+
+
         # button to invert image
         self.button_invert = QPushButton("Invert Image", self)
         self.button_invert.clicked.connect(self.EH.on_invert)
@@ -253,20 +262,23 @@ class App(QWidget):
         self.layout.addWidget(QLabel("Contrast"), 14, 1, Qt.AlignRight)
         self.layout.addWidget(self.slider_contrast, 14, 2, 1, 1)
 
-        self.layout.addWidget(self.button_ink, 15, 1, 1, 1)
-        self.layout.addWidget(self.button_ink_all, 15, 2, 1, 1)
+        self.layout.addWidget(QLabel("Brightness"), 15, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_brightness, 15, 2, 1, 1)
 
-        self.layout.addWidget(self.button_invert, 16, 1, Qt.AlignTop)
-        self.layout.addWidget(self.button_copy, 16, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_ink, 16, 1, 1, 1)
+        self.layout.addWidget(self.button_ink_all, 16, 2, 1, 1)
 
-        self.layout.addWidget(self.button_edge, 19, 1, 1, 2, Qt.AlignTop)
+        self.layout.addWidget(self.button_invert, 17, 1, Qt.AlignTop)
+        self.layout.addWidget(self.button_copy, 17, 2, Qt.AlignTop)
 
-        self.layout.addWidget(self.edgeDepthTxt, 17, 1, 1, 2, Qt.AlignCenter)
-        self.layout.addWidget(self.slider_edge, 18, 1, 1, 2)
+        self.layout.addWidget(self.button_edge, 20, 1, 1, 2, Qt.AlignTop)
+
+        self.layout.addWidget(self.edgeDepthTxt, 18, 1, 1, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.slider_edge, 19, 1, 1, 2)
 
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
-        self.layout.addWidget(hline, 20, 1, 1, 3)
+        self.layout.addWidget(hline, 21, 1, 1, 3)
 
         self.layout.addWidget(self.button_save, 22, 1, 1, 2, Qt.AlignCenter)
         self.layout.addWidget(self.button_load, 23, 1, 1, 2, Qt.AlignCenter)

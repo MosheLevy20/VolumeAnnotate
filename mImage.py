@@ -30,6 +30,7 @@ class mImage(object):
 		self.annotationRadius = 3
 
 		self.contrast = 3
+		self.brightness = 127
 
 		self.invert = False
 
@@ -106,7 +107,7 @@ class mImage(object):
 		img = cv2.convertScaleAbs(
 			(img / f).astype(np.uint8), 
 			alpha=self.contrast/5, 
-			beta=100
+			beta=self.brightness
 		)
 		return np.stack([img, img, img], axis=2)
 

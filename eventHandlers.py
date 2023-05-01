@@ -184,6 +184,10 @@ class EventHandler(object):
         self.app.image.contrast = self.app.slider_contrast.value()
         self.app._update_image()
 
+    def on_slider_brightness_change(self, event):
+        self.app.image.brightness = self.app.slider_brightness.value()
+        self.app._update_image()
+
     def on_invert(self, event):
         self.app.image.invert = not self.app.image.invert
         self.app._update_image()
