@@ -2,13 +2,14 @@
 import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
-
+from helpers import adjust_color
 class mImage(object):
 	def __init__(self, frame_count, img_loader, display_size=800):
 		self.img_loader = img_loader
 		# N.B. this is z, x, y
 		self.shape = self.img_loader.shape
 		self.imshape = self.shape[1:]
+		
 		self.loaded_shape = None
 		# This will hold the pixmap once loaded
 		self.img = None
@@ -21,6 +22,7 @@ class mImage(object):
 			self.display_height = display_size
 			self.display_width = int(display_size*self.imshape[0]/self.imshape[1])
 
+		self.f = np.array([self.display_width/self.imshape[0], self.display_height/self.imshape[1]])
 		# Defines the zoom level and the (X,Y) offset of where to start drawing.
 		self.scale = 1
 		self.offset = np.array([0.0,0.0])
@@ -30,6 +32,9 @@ class mImage(object):
 		self.annotationRadius = 3
 
 		self.contrast = 3
+		self.shadows = 50
+		self.midtones = 50
+		self.highlights = 50
 
 		self.invert = False
 
@@ -74,17 +79,18 @@ class mImage(object):
 		y1 = int(self.imshape[1]*self.scale)
 		self.loaded_shape = (x1, y1)
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
-		
+		img = cv2.resize(img, (self.display_height, self.display_width))
 		img = self.normalize_image(img=img)
+
+		size = [self.display_width/self.scale, self.display_height/self.scale]
+		offset = [int(self.offset[0]*self.f[0]/self.scale), int(self.offset[1]*self.f[1]/self.scale)]
 		if show_annotations:
 			for an in self.annotations[frame_index]:
-				an.show(img, self.imshape, self.annotationRadius, True, x0, y0, self.scale)
+				an.show(img, size, self.annotationRadius, True, offset, self.scale)
 			for an in self.interpolated[frame_index]:
-				an.show(img, self.imshape, self.annotationRadius, False, x0, y0, self.scale)
+				an.show(img, size, self.annotationRadius, False, offset, self.scale)
 		
 		
-		#resize the image by interpolation
-		img = cv2.resize(img, (self.display_height, self.display_width))
 		#convert to pixmap
 		qimg = QImage(img, img.shape[1], img.shape[0], QImage.Format_RGB888)
 		pixmap = QPixmap.fromImage(qimg)
@@ -103,11 +109,9 @@ class mImage(object):
 			f = (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)
 		else:
 			f = 1
-		img = cv2.convertScaleAbs(
-			(img / f).astype(np.uint8), 
-			alpha=self.contrast/5, 
-			beta=100
-		)
+		
+		img = adjust_color((img / f).astype(np.uint8), self.shadows, self.midtones, self.highlights)
+
 		return np.stack([img, img, img], axis=2)
 
 	def get2DImage(self, app):

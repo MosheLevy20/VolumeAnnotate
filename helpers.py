@@ -58,7 +58,8 @@ class Point(object):
 		else:
 			raise IndexError("Point index out of range")
 
-	def show(self, arr, img_shape, size, node, x0, y0, scale):
+	def show(self, arr, img_shape, size, node, offset, scale):
+		x0, y0 = offset
 		if node:
 			size *= 2
 		#draws point to copy of the current frame
@@ -469,6 +470,31 @@ def hashable_to_slice(item):
 def getColor(colorIdx):
 	colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
 	return colors[colorIdx]
+
+
+
+def adjust_color(image, shadows, midtones, highlights):
+	# Normalize input values to a range between 0 and 1
+	shadows = (shadows-50) / 50
+	midtones = (midtones-50) / 50
+	highlights = (highlights-50) / 50
+
+	# Convert the image to a floating-point format
+	image_float = image.astype(np.float32) / 255.0
+
+	# Adjust shadows
+	image_float = np.where(image_float < 0.5, image_float * (1 + shadows), image_float)
+
+	# Adjust midtones (gamma correction)
+	image_float = np.power(image_float, 1 / (1 + midtones))
+
+	# Adjust highlights
+	image_float = np.where(image_float > 0.5, image_float * (1 - highlights) + highlights, image_float)
+
+	# Clip the values to the range [0, 1] and convert back to the original data type
+	adjusted_image = np.clip(image_float * 255, 0, 255).astype(np.uint8)
+
+	return adjusted_image
 
 
 def interpolatePoints(points, imShape):

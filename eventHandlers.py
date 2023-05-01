@@ -183,6 +183,18 @@ class EventHandler(object):
     def on_slider_contrast_change(self, event):
         self.app.image.contrast = self.app.slider_contrast.value()
         self.app._update_image()
+    
+    def on_slider_highlights_change(self, event):
+        self.app.image.highlights = self.app.slider_highlights.value()
+        self.app._update_image()
+    
+    def on_slider_midtones_change(self, event):
+        self.app.image.midtones = self.app.slider_midtones.value()
+        self.app._update_image()
+
+    def on_slider_shadows_change(self, event):
+        self.app.image.shadows = self.app.slider_shadows.value()
+        self.app._update_image()
 
     def on_invert(self, event):
         self.app.image.invert = not self.app.image.invert
@@ -200,7 +212,7 @@ class EventHandler(object):
             return
         imageIndices = list(range(
             self.app._frame_index, min(
-            self.app._frame_index + self.app.edgeDepth, self.app._frame_count
+            self.app._frame_index + self.app.edgeDepth, self.app._frame_count-1
         )))
         # use findEdges to get the list of edges
         edges = findEdges(

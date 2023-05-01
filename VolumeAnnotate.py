@@ -128,12 +128,35 @@ class App(QWidget):
         )
 
         # slider for contrast
-        self.slider_contrast = QSlider(Qt.Horizontal, self)
-        self.slider_contrast.setMinimum(0)
-        self.slider_contrast.setMaximum(10)
-        self.slider_contrast.setValue(3)
-        # change contrast when slider is changed
-        self.slider_contrast.valueChanged.connect(self.EH.on_slider_contrast_change)
+        # self.slider_contrast = QSlider(Qt.Horizontal, self)
+        # self.slider_contrast.setMinimum(0)
+        # self.slider_contrast.setMaximum(10)
+        # self.slider_contrast.setValue(3)
+        # # change contrast when slider is changed
+        # self.slider_contrast.valueChanged.connect(self.EH.on_slider_contrast_change)
+        self.slider_highlights = QSlider(Qt.Horizontal, self)
+        self.slider_highlights.setMinimum(1)
+        self.slider_highlights.setMaximum(200)
+        self.slider_highlights.setValue(50)
+        #change highlights when slider is changed
+        self.slider_highlights.valueChanged.connect(self.EH.on_slider_highlights_change)
+
+        #slider for midtones
+        self.slider_midtones = QSlider(Qt.Horizontal, self)
+        self.slider_midtones.setMinimum(1)
+        self.slider_midtones.setMaximum(200)
+        self.slider_midtones.setValue(50)
+        #change midtones when slider is changed
+        self.slider_midtones.valueChanged.connect(self.EH.on_slider_midtones_change)
+
+        #slider for shadows
+        self.slider_shadows = QSlider(Qt.Horizontal, self)
+        self.slider_shadows.setMinimum(1)
+        self.slider_shadows.setMaximum(200)
+        self.slider_shadows.setValue(50)
+        #change shadows when slider is changed
+        self.slider_shadows.valueChanged.connect(self.EH.on_slider_shadows_change)
+
 
         # button to invert image
         self.button_invert = QPushButton("Invert Image", self)
@@ -216,9 +239,9 @@ class App(QWidget):
         print("Finished pixmap")
         # self.layout.rowStretch(2)#didn't work, try:
         self.layout.addWidget(self.label, 0, 0, 30, 1)
-        self.layout.addWidget(self.button_zoom_in, 4, 2, Qt.AlignRight)
+        self.layout.addWidget(self.button_zoom_in, 2, 2, Qt.AlignRight)
         # the parameters are: row, column, rowspan, colspan, alignment
-        self.layout.addWidget(self.button_zoom_out, 4, 1, Qt.AlignLeft)
+        self.layout.addWidget(self.button_zoom_out, 2, 1, Qt.AlignLeft)
         self.layout.addWidget(self.button_next_frame, 1, 2, Qt.AlignRight)
         self.layout.addWidget(self.button_previous_frame, 1, 1, Qt.AlignLeft)
 
@@ -228,30 +251,41 @@ class App(QWidget):
 
         hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
-        self.layout.addWidget(hline, 5, 1, 1, 3)
+        self.layout.addWidget(hline, 4, 1, 1, 3)
 
-        self.layout.addWidget(self.mouseModeWidget, 5, 1, 6, 1)
-        self.layout.addWidget(self.button_show_annotations, 6, 2, 1, 1)
+        self.layout.addWidget(self.mouseModeWidget, 4, 1, 6, 1)
+        self.layout.addWidget(self.button_show_annotations, 5, 2, 1, 1)
 
-        self.layout.addWidget(QLabel("Annotation Color:"), 7, 2, Qt.AlignCenter)
-        self.layout.addWidget(self.annotationColorMenu, 8, 2, 1, 1)
+        #self.layout.addWidget(QLabel("Annotation Color:"), 7, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.annotationColorMenu, 6, 2, 1, 1)
 
-        hline = QFrame()
+        self.layout.addWidget(QLabel("Annotation Radius"), 7, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.slider_annotation_radius, 8, 2, 1, 1)
+
+        #hline = QFrame()
         hline.setFrameShape(QFrame.HLine)
-        self.layout.addWidget(hline, 10, 1, 1, 3)
+        self.layout.addWidget(hline, 9, 1, 1, 3)
 
-        self.layout.addWidget(QLabel("Ink Threshold"), 11, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider, 11, 2, 1, 1)
+        self.layout.addWidget(QLabel("Ink Threshold"), 10, 1, Qt.AlignCenter)
+        self.layout.addWidget(self.slider, 11, 1, 1, 1)
 
-        self.layout.addWidget(QLabel("Ink Radius"), 12, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_ink_radius, 12, 2, 1, 1)
+        self.layout.addWidget(QLabel("Ink Radius"), 10, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.slider_ink_radius, 11, 2, 1, 1)
         self.inkRadius = 3
 
-        self.layout.addWidget(QLabel("Annotation Radius"), 13, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_annotation_radius, 13, 2, 1, 1)
+        
 
-        self.layout.addWidget(QLabel("Contrast"), 14, 1, Qt.AlignRight)
-        self.layout.addWidget(self.slider_contrast, 14, 2, 1, 1)
+        # self.layout.addWidget(QLabel("Contrast"), 14, 1, Qt.AlignRight)
+        # self.layout.addWidget(self.slider_contrast, 14, 2, 1, 1)
+        self.layout.addWidget(QLabel("Shadows"), 12, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_shadows, 12, 2, 1, 1)
+
+        self.layout.addWidget(QLabel("Midtones"), 13, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_midtones, 13, 2, 1, 1)
+
+        self.layout.addWidget(QLabel("Highlights"), 14, 1, Qt.AlignRight)
+        self.layout.addWidget(self.slider_highlights, 14, 2, 1, 1)
+
 
         self.layout.addWidget(self.button_ink, 15, 1, 1, 1)
         self.layout.addWidget(self.button_ink_all, 15, 2, 1, 1)
