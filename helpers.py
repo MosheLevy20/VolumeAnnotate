@@ -15,6 +15,9 @@ import struct
 import json
 import requests
 from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+from scipy.spatial import Delaunay
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 #point annotation object
@@ -693,3 +696,34 @@ def download_file(url, filenames, username, password, download_dir="."):
 		else:
 			print(f"Download failed with status code: {response.status_code}")
 
+
+def plot3Dmesh(points, voxel_data, offset=(0,0,0)):
+	points -= np.array(offset)
+	# Perform Delaunay triangulation
+	tri = Delaunay(points)
+
+	# Create a list to store the colors of each face
+	face_colors = []
+
+	# Iterate over the triangles and compute the average voxel value
+	for simplex in tri.simplices:
+		avg_voxel_value = np.mean([voxel_data[tuple(point)] for point in points[simplex]])
+		face_colors.append(avg_voxel_value)
+
+	# Normalize face_colors to be between 0 and 1
+	face_colors = (face_colors - np.min(face_colors)) / (np.max(face_colors) - np.min(face_colors))
+
+	# Create a colormap
+	cmap = plt.cm.get_cmap("gray")
+
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	# Create a collection of triangles with the corresponding colors
+	trisurf = ax.plot_trisurf(points[:, 0], points[:, 1], points[:, 2], triangles=tri.simplices)
+
+	# Set the facecolors of the trisurf object
+	trisurf.set_facecolors(cmap(face_colors))
+
+	plt.show()

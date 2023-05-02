@@ -111,8 +111,8 @@ class App(QWidget):
         self.button_save_2D.clicked.connect(self.EH.on_save_2D)
 
         #Show 3d preview
-        # self.button_show_3D = QPushButton("Show 3D Preview", self)
-        # self.button_show_3D.clicked.connect(self.EH.on_show_3D)
+        self.button_show_3D = QPushButton("Show 3D Preview", self)
+        self.button_show_3D.clicked.connect(self.EH.on_show_3D)
 
         # button that finds ink based on threshold
         self.button_ink = QPushButton("Find Ink (This Frame)", self)
@@ -331,14 +331,16 @@ class App(QWidget):
         hline.setFrameShape(QFrame.HLine)
         self.layout.addWidget(hline, 20, 1, 1, 3)
 
-        self.layout.addWidget(self.button_save, 22, 1, 1, 2, Qt.AlignCenter)
-        self.layout.addWidget(self.button_load, 23, 1, 1, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.button_save, 21, 1, 1, 2, Qt.AlignCenter)
+        self.layout.addWidget(self.button_load, 22, 1, 1, 2, Qt.AlignCenter)
+        
+        self.layout.addWidget(self.button_show_3D, 23, 1, 1, 2, Qt.AlignCenter)
 
         self.layout.addWidget(QLabel("Projection Style:"), 24, 1, 1, 2, Qt.AlignCenter)
         self.layout.addWidget(self.unwrapStyleWidget, 25, 1, 1, 2, Qt.AlignCenter)
         self.layout.addWidget(self.button_save_2D, 26, 1, 1, 2, Qt.AlignCenter)
 
-        #self.layout.addWidget(self.button_show_3D, 27, 1, 1, 2, Qt.AlignCenter)
+        
         
         if self.image.img is None:
             self.image.getImg(self._frame_index)
