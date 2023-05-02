@@ -1,7 +1,7 @@
 from mImage import mImage
 from helpers import *
 from eventHandlers import *
-
+from loading import Loader, RemoteZarr, load_tif
 
 # unique session id including timestamp, for autosaving progress
 sessionId0 = time.strftime("%Y%m%d%H%M%S") 
@@ -30,13 +30,14 @@ class App(QWidget):
             urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/", 
             "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
             }
-            # urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes/20230210143520/",
-            # "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
-            # }
+            urlsSmall = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_small/20230205180739/",
+                         "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_small/20230210143520/",}
+
             username = "registeredusers"
             password = "only"
             #dialog box select scroll1 or scroll2
             scroll = QInputDialog.getItem(self, "Select Scroll", "Scroll:", list(urls.keys()), 0, False)[0]
+            self.scroll = scroll
 
             downpath = QFileDialog.getExistingDirectory(self, "Select Directory to Download Images", os.getcwd())
             downpath = os.path.join(downpath, scroll+"_downloads")
