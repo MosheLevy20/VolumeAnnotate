@@ -8,7 +8,6 @@ sessionId0 = time.strftime("%Y%m%d%H%M%S")
 sessionId = sessionId0 + "autosave.pkl"
 
 
-
 class App(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
@@ -16,20 +15,50 @@ class App(QWidget):
 
         self.sessionId = sessionId
         self.sessionId0 = sessionId0
+
+        STREAM = QInputDialog.getItem(None, "Stream or Local", "Stream or Local:", ["Local","Stream"], 0, False)[0] == "Stream"
+
+    
+        
         # set to full screen
         # self.showFullScreen()
-        print(f"Loading image folder {folder}")
         #self.volpkg = Volpkg(folder, sessionId0)
         #self.loader = Loader(self.volpkg.img_array, max_mem_gb=3)
-        img_array, _ = load_tif(folder)
-        self.loader = Loader(img_array, max_mem_gb=3)
+        
+        t0 = time.time()
+        if STREAM:
+            urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/", 
+            "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
+            }
+            # urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes/20230210143520/",
+            # "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
+            # }
+            username = "registeredusers"
+            password = "only"
+            #dialog box select scroll1 or scroll2
+            scroll = QInputDialog.getItem(self, "Select Scroll", "Scroll:", list(urls.keys()), 0, False)[0]
+
+            downpath = QFileDialog.getExistingDirectory(self, "Select Directory to Download Images", os.getcwd())
+            downpath = os.path.join(downpath, scroll+"_downloads")
+            #check if downpath exists
+            if not os.path.exists(downpath):
+                os.makedirs(downpath)
+            img_array = RemoteZarr(urls[scroll], username, password, downpath, max_storage_gb=20)
+        else:
+            # on startup request folder
+            folder = QFileDialog.getExistingDirectory(None, "Select Directory")
+            img_array, _ = load_tif(folder)
+        self.loader = Loader(img_array, STREAM, max_mem_gb=3)
 
         # set grid layout
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
         self._frame_index = 0
-        self._frame_count = img_array.shape[0]
+        if STREAM:
+            self._frame_count = img_array.file_list.shape[0]
+        else:
+            self._frame_count = img_array.shape[0]
         # add text for frame number, non editable
         self.frame_number = QLabel(self)
         self.frame_number.setText(f"Frame {self._frame_index+1}/{self._frame_count}")
@@ -371,7 +400,6 @@ class App(QWidget):
 
     def _update_image(self):
         pmap = self.image.getImg(self._frame_index, self.show_annotations)
-        
         self.label.setPixmap(pmap)
 
     def keyPressEvent(self, event):
@@ -393,8 +421,7 @@ class App(QWidget):
 
 
 app = QApplication([])
-# on startup request folder
-folder = QFileDialog.getExistingDirectory(None, "Select Directory")
-win = App(folder=folder)
+
+win = App()
 print("App initialized")
 app.exec()

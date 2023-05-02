@@ -4,8 +4,9 @@ from helpers import Point
 
 
 def find_and_discard_small_edges(image, min_edge_length=100):
-	mu = np.mean(image)
-	sigma = np.std(image)
+	imNoZeros = image[image != 0]
+	mu = np.mean(imNoZeros)
+	sigma = np.std(imNoZeros)
 	
 	image= np.where(image > mu, 255, 0)
 	image = np.array(image, dtype=np.uint8)
@@ -39,15 +40,8 @@ def findEdges(initialEdge, imageIndices, radius, loader):
 		# uint16s.
 		currentImage = loader[i, :, :]
 		# Increase contrast
-		if type(currentImage[0,0]) == np.uint16:
-			f = (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)
-		else:
-			f = 1
-
-
-
 		currentImage = cv2.convertScaleAbs(
-			(currentImage / f).astype(np.uint8), 
+			(currentImage / (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)).astype(np.uint8), 
 			alpha=2.5, 
 			beta=0
 		)

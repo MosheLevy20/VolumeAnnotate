@@ -49,11 +49,11 @@ class EventHandler(object):
         self.app._update_image()
 
     def on_next_frame(self, event):
-        self.app._frame_index = (self.app._frame_index + 1) % self.app._frame_count
+        self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
         self.app._update_frame()
 
     def on_previous_frame(self, event):
-        self.app._frame_index = (self.app._frame_index - 1) % self.app._frame_count
+        self.app._frame_index = max(self.app._frame_index - 1, 0)
         self.app._update_frame()
 
     def on_copy(self, event):
@@ -246,11 +246,11 @@ class EventHandler(object):
     def keyPressEvent(self, event):
         #print(event.key())
         if event.key() == Qt.Key_Right:
-            self.app._frame_index = (self.app._frame_index + 1) % self.app._frame_count
+            self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
             self.app._update_frame()
             return
         elif event.key() == Qt.Key_Left:
-            self.app._frame_index = (self.app._frame_index - 1) % self.app._frame_count
+            self.app._frame_index = max(self.app._frame_index - 1, 0)
             self.app._update_frame()
             return
         elif event.key() == Qt.Key_Up:

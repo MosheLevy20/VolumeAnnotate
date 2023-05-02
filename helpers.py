@@ -13,8 +13,9 @@ from PyQt5.QtCore import *
 # import pyvista as pv
 import struct
 import json
+import requests
+from bs4 import BeautifulSoup
 
-#TODO: figure out step size generally (including non square images)
 
 #point annotation object
 class Point(object):
@@ -70,6 +71,102 @@ class Point(object):
 	def updateColor(self, colorIdx):
 		self.colorIdx = colorIdx
 		self.color = getColor(colorIdx)
+
+
+class RemoteZarr:
+	def __init__(self, url, username, password, path, max_storage_gb=10):
+		self.url = url
+		self.username = username
+		self.password = password
+		self.path = path
+		self.file_list = np.array(list_files(url, username, password))
+		self.downloaded = {}
+		self.store = None
+		self.shape = None
+		self.filesize = None
+		self.max_storage_gb = max_storage_gb
+		self.maxfiles = 1000
+		self.chunks = None
+		self.dtype = None
+		tiffs = [filename for filename in os.listdir(self.path) if filename.endswith(".tif")]
+		if len(tiffs) > 0:
+			self.update_store()
+		else:
+			firstSlice = self[0:1,:,:]
+
+
+
+	def update_store(self, currfilename=None):
+		tiffs = [filename for filename in os.listdir(self.path) if filename.endswith(".tif")]
+		if all([filename[:-4].isnumeric() for filename in tiffs]):
+			# This looks like a set of z-level images
+			if len(tiffs) > self.maxfiles:
+				#delete files ordered by use time
+				#delete files until we are below maxfiles
+				tiffsByTime = sorted(tiffs, key=lambda f: os.path.getatime(os.path.join(self.path, f)))
+				#reverse list so we delete oldest first
+				tiffsByTime.reverse()
+				print(tiffsByTime, "tiffsByTime")
+				filesToDelete = tiffsByTime[self.maxfiles:] 
+				for f in filesToDelete:
+					if f in currfilename:
+						continue
+					os.remove(os.path.join(self.path, f))
+				tiffs = tiffsByTime[:self.maxfiles]
+			tiffs.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+			paths = [os.path.join(self.path, filename) for filename in tiffs]
+			self.downloaded = {filename:i for i, filename in enumerate(tiffs)}
+			store = tifffile.imread(paths, aszarr=True)
+			self.store = zarr.open(store, mode="r")
+			self.shape = np.array([len(self.file_list), *self.store.shape[1:]])
+
+			self.chunks = self.store.chunks
+			self.dtype = self.store.dtype
+			self.filesize = np.prod(self.store.shape[1:])*self.store.dtype.itemsize/1e9
+			self.maxfiles = int(self.max_storage_gb/self.filesize)
+
+			#print shape of store
+			print(self.store.shape, "store shape")
+			print(self.maxfiles, "maxfiles")
+
+	def _download_file(self, filename):
+		download_file(self.url, filename, self.username, self.password, self.path)
+
+	def _get_file_index(self, i):
+		print("getting file index", i)
+		#turn slice into list
+		if type(i) == slice:
+			i = np.array(range(i.start, i.stop+1))
+		print(i, "i", type(i))
+		filename = self.file_list[i]
+		#if filename isn't a np array of files turn it into one
+		if type(filename) != np.ndarray:
+			filename = np.array([filename])
+		inkeys= np.array([f in self.downloaded.keys() for f in filename])
+		print(inkeys, "inkeys")
+		if not np.all(inkeys):
+			print("downloading file")
+			#find which files are not downloaded
+			notDown = np.where(~inkeys)[0]
+
+			self._download_file(filename[notDown])
+			self.update_store(filename)
+		print(self.downloaded, filename)
+		return np.array([self.downloaded[f] for f in filename])
+
+	def __getitem__(self, key):
+		print("getting item", key)
+		i = key[0]
+		i = self._get_file_index(i)
+
+		#turn list into slice
+		#if type(i) == np.ndarray:
+		i = slice(i[0], i[-1]+1)
+		#combine i with the rest of the key
+		key = (i, *key[1:])
+
+		return self.store[key]
+
 
 def load_tif(path):
 	"""This function will take a path to a folder that contains a stack of .tif
@@ -231,12 +328,14 @@ class Loader:
 	{"accesstime": last access time, "array": numpy array with data}
 	"""
 
-	def __init__(self, zarr_array, max_mem_gb=3):
+	def __init__(self, zarr_array, STREAM, max_mem_gb=5):
 		self.shape = zarr_array.shape
 		print("Data array shape: ", self.shape)
 		self.cache = {}
 		self.zarr_array = zarr_array
+		self.STREAM = STREAM
 		self.max_mem_gb = max_mem_gb
+
 		chunk_shape = self.zarr_array.chunks
 		if chunk_shape[0] == 1:
 			self.chunk_type = "zstack"
@@ -340,12 +439,13 @@ class Loader:
 		data, prefers padding in z.
 		"""
 		def pad_slice(old_slice, length, int_add=1):
+			
 			if isinstance(old_slice, int):
 				if length == 1:
 					return old_slice
 				return slice(
 					max(0, old_slice - int_add),
-					min(length, old_slice + int_add + 1),
+					min(length,old_slice + int_add + 1),
 					None
 				)
 			start = old_slice.start if old_slice.start is not None else 0
@@ -370,6 +470,7 @@ class Loader:
 			est_size = self.estimate_slice_size(zslice, xslice, yslice)
 			if (3 * est_size) >= self.max_mem_gb:
 				return zslice, xslice, yslice
+			print("made it here")
 			zslice = pad_slice(zslice, self.shape[0])
 		elif self.chunk_type == "cuboid":
 			# First pad in Z by 5 in each direction if we have space, then in XY
@@ -403,19 +504,25 @@ class Loader:
 		# so that we cache neighboring data in memory to avoid
 		# repeatedly hammering the disk
 		padded_zslice, padded_xslice, padded_yslice = self.pad_request(zslice, xslice, yslice)
+		print("Padded z slice", padded_zslice, zslice)
 		est_size = self.estimate_slice_size(padded_zslice, padded_xslice, padded_yslice)
 		# Clear out enough space from the cache that we can fit the new
 		# request within our memory limits.
 		while self.cache and (self.cache_size + est_size) > self.max_mem_gb:
 			self.empty_cache()
+		print(f"padded z: {padded_zslice}")
+		padding = self.zarr_array[padded_zslice, padded_xslice, padded_yslice]
+		print(padding.shape, "padding")
 		self.cache[(
 			slice_to_hashable(padded_zslice),
 			slice_to_hashable(padded_xslice),
 			slice_to_hashable(padded_yslice),
 		)] = {
 			"accesstime": time.time(),
-			"array": self.zarr_array[padded_zslice, padded_xslice, padded_yslice],
+			"array": padding,
 		}
+		
+
 		result = self.check_cache(zslice, xslice, yslice)
 		if result is None:
 			# We shouldn't get cache misses!
@@ -431,39 +538,6 @@ def slice_to_hashable(slice):
 def hashable_to_slice(item):
 	return slice(item[0], item[1], None)
 
-#under development
-# class VoxelViewer(QMainWindow):
-
-# 	def __init__(self, parent=None, data=None):
-# 		QMainWindow.__init__(self, parent)
-
-# 		# Create the main window
-# 		self.setWindowTitle("Voxel Viewer")
-# 		self.resize(800, 600)
-
-# 		# Create a PyVista background plotter
-# 		self.plotter = BackgroundPlotter()
-# 		self.plotter.allow_quit_keypress = False
-# 		self.setCentralWidget(self.plotter.app_window)
-# 		print(data)
-# 		data = data
-# 		print(data)
-# 		#quit()
-# 		# Convert voxel data to mesh and reduce resolution if needed
-# 		self.voxel_mesh = self.create_mesh(data, min_value=0.5)
-# 		self.plotter.add_mesh(self.voxel_mesh, opacity=0.5)
-
-# 	def create_mesh(self, data, min_value=1e-5):
-# 		# Convert the voxel data to a 3D volume
-# 		volume = pv.wrap(data)
-
-# 		# Create a mesh by thresholding the volume based on the min_value
-# 		mesh = volume.threshold(value=(min_value, data.max()))
-
-# 		# Convert the UnstructuredGrid to a PolyData object, with brightness val
-# 		polydata = mesh.extract_geometry()
-
-# 		return polydata
 
 
 
@@ -580,3 +654,42 @@ def autoSave(app, file_name=None):
 	#save annotations to vcp file
 	# TODO: resolve volpkg issues
 	# app.volpkg.saveVCPS(app.sessionId0, app.image.interpolated, app.image.imshape)
+
+
+def list_files(url, username, password):
+	# Send a request with basic authentication
+	response = requests.get(url, auth=(username, password))
+	
+	# Check if the request was successful
+	if response.status_code == 200:
+		# Parse the HTML content
+		soup = BeautifulSoup(response.text, "html.parser")
+		
+		# Find all the links
+		links = soup.find_all("a")
+		
+		# Extract the href attribute and filter out the parent directory link
+		files = [link.get("href") for link in links if link.get("href") != "../"]
+		
+		return files
+	else:
+		print(f"Request failed with status code: {response.status_code}")
+		return []
+
+
+def download_file(url, filenames, username, password, download_dir="."):
+	print(url, filenames)
+	# Send a request with basic authentication
+	for filename in filenames:
+		response = requests.get(url+filename, auth=(username, password), stream=True)
+		
+		# Check if the request was successful
+		if response.status_code == 200:
+			# Save the content to a file
+			with open(f"{download_dir}/{filename}", "wb") as f:
+				for chunk in response.iter_content(chunk_size=8192):
+					f.write(chunk)
+			print(f"File '{filename}' downloaded successfully.")
+		else:
+			print(f"Download failed with status code: {response.status_code}")
+
