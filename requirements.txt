@@ -4,4 +4,8 @@ opencv-python
 tifffile
 zarr
 PyQt5
+requests
+beautifulsoup4
+matplotlib
+scipy
 
