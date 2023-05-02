@@ -719,6 +719,8 @@ def plot3Dmesh(points, voxel_data, offset=(0,0,0)):
 
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection='3d')
+	#set title
+	ax.set_title("3D Mesh")
 
 	# Create a collection of triangles with the corresponding colors
 	trisurf = ax.plot_trisurf(points[:, 0], points[:, 1], points[:, 2], triangles=tri.simplices)
