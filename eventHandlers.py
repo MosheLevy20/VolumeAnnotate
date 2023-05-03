@@ -276,6 +276,18 @@ class EventHandler(object):
 		else:
 			print("Warning: Unrecognized key press")
 
+	def wheelEvent(self, event):
+		steps = event.angleDelta().y() // 120
+		if steps > 0:
+			if self.app.image.scale < 0.11:
+				return
+			self.app.image.zoom(1 / 1.1)
+		else:
+			if self.app.image.scale > 10:
+				return
+			self.app.image.zoom(1.1)
+		self.app._update_image()
+
 	def mousePressEvent(self, event):
 		self.app.frame_edit_display.clearFocus()
 		self.app.clickState = 1

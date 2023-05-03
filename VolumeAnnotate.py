@@ -408,6 +408,9 @@ class App(QWidget):
     def keyPressEvent(self, event):
         return self.EH.keyPressEvent(event)
 
+    def wheelEvent(self, event):
+        return self.EH.wheelEvent(event)
+
     def mousePressEvent(self, event):
         return self.EH.mousePressEvent(event)
 
