@@ -236,7 +236,7 @@ class EventHandler(object):
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_Up:
-			if self.app.image.scale < 0.11:
+			if self.app.image.scale < 0.01:
 				return
 			self.app.image.zoom(1 / 1.1)
 			self.app._update_image()
@@ -380,6 +380,22 @@ class EventHandler(object):
 			self.app._update_image()
 		else:
 			print(f"Warning: mouse mode not recognized: {self.app.mouseMode}")
+	
+	def wheelEvent(self, event):
+		#pan the image
+		#check if shift is pressed
+		if event.modifiers() == Qt.ShiftModifier:
+			pan = np.array([0.0, 1.0])
+		else:
+			pan = np.array([1.0, 0.0])
+		if event.angleDelta().y() > 0:
+			pan *= -self.app.panLen
+
+		elif event.angleDelta().y() < 0:
+			pan *= self.app.panLen
+		self.app.image.pan(pan)
+		
+		self.app._update_image()
 
 	# on mouse release, stop dragging
 	def mouseReleaseEvent(self, event):
