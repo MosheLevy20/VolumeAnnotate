@@ -94,42 +94,19 @@ class EventHandler(object):
 		if filename[0] != "":
 			# use cv2 to save image
 			cv2.imwrite(filename[0], image2D)
-  
+	def on_export_obj(self, event):
+		fname = QFileDialog.getSaveFileName(
+			self.app, "Save File", os.getcwd(), "Obj Files (*.obj)"
+		)
+		nodes, full_data, offset = getPointsAndVoxels(self.app)
+		exportToObj(np.array(nodes), full_data, fname, offset=offset)
+
 	def on_show_3D(self, event):
-		# Check if there are any annotations in any of the rows
-		lens = [len(i) for i in self.app.image.annotations]
-		if sum(lens) == 0:
-			return
-		print("showing 3D")
-
-		imshape = self.app.image.imshape
-
-		# Create lists to store the nodes and faces that make up the mesh
-		nodes = []
-		faces = []
-		rowlens = [len(i) for i in self.app.image.annotations]
-		# Iterate through the rows of annotations
-		for i in range(len(self.app.image.annotations)):
-			row = self.app.image.annotations[i]
-
-			# Add nodes to the nodes list
-			for p in row:
-				nodes.append((i,int(p.x * imshape[0]), int(p.y * imshape[1])))
-
+		nodes, full_data, offset = getPointsAndVoxels(self.app)
 		
-		faces = np.array(faces)
-
-		# Retrieve the full_data array as in the original code
-		noneEmptyZ = [index for index, i in enumerate(self.app.image.annotations) if len(i) > 0]
-		zmin, zmax = min(noneEmptyZ), max(noneEmptyZ)
-		xmin, xmax = int(min(p.x for row in self.app.image.annotations for p in row) * imshape[0]), \
-					int(max(p.x for row in self.app.image.annotations for p in row) * imshape[0])
-		ymin, ymax = int(min(p.y for row in self.app.image.annotations for p in row) * imshape[1]), \
-					int(max(p.y for row in self.app.image.annotations for p in row) * imshape[1])
-		full_data = self.app.loader[zmin:zmax + 1, xmin:xmax + 1, ymin:ymax + 1]
-		
-		plot3Dmesh(np.array(nodes), full_data, offset=(zmin,xmin,ymin))
-		
+		plot3Dmesh(np.array(nodes), full_data, offset=offset)
+	
+	
 
 	def on_ink(self, event):
 		self.app.update_ink()
@@ -213,8 +190,8 @@ class EventHandler(object):
 			)
 
 		# run ink detection on the new annotations
-		for i in range(1, len(edges)):
-			self.app.update_ink(self.app._frame_index + i)
+		# for i in range(1, len(edges)):
+		# 	self.app.update_ink(self.app._frame_index + i)
 
 		autoSave(self.app)
 

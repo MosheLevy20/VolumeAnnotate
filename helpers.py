@@ -11,7 +11,21 @@ from PyQt5.QtCore import *
 
 import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
-#from mpl_toolkits.mplot3d import Axes3D
+from skimage.io import imsave
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import trimesh
+import pyvista as pv
+import meshio
+from mpl_toolkits.mplot3d import Axes3D
+from skimage import measure
+from sklearn.cluster import KMeans
+from scipy import ndimage
+from skimage.morphology import skeletonize_3d
+import pymesh
+from scipy.spatial import ConvexHull
+from matplotlib.tri._triangulation import Triangulation
+
+
 
 
 #point annotation object
@@ -186,38 +200,75 @@ def autoSave(app, file_name=None):
 	# TODO: resolve volpkg issues
 	# app.volpkg.saveVCPS(app.sessionId0, app.image.interpolated, app.image.imshape)
 
+def getPointsAndVoxels(app):
+	lens = [len(i) for i in app.image.interpolated]
+	if sum(lens) == 0:
+		return
+	print("showing 3D")
+
+	imshape = app.image.imshape
+
+	# Create lists to store the nodes and faces that make up the mesh
+	nodes = []
+	#rowlens = [len(i) for i in app.image.interpolated]
+	# Iterate through the rows of interpolated
+	for i in range(len(app.image.interpolated)):
+		row = app.image.interpolated[i]
+
+		# Add nodes to the nodes list
+		for p in row:
+			nodes.append((i,int(p.x * imshape[0]), int(p.y * imshape[1])))
 
 
+
+	# Retrieve the full_data array as in the original code
+	noneEmptyZ = [index for index, i in enumerate(app.image.annotations) if len(i) > 0]
+	zmin, zmax = min(noneEmptyZ), max(noneEmptyZ)
+	xmin, xmax = int(min(p.x for row in app.image.annotations for p in row) * imshape[0]), \
+				int(max(p.x for row in app.image.annotations for p in row) * imshape[0])
+	ymin, ymax = int(min(p.y for row in app.image.annotations for p in row) * imshape[1]), \
+				int(max(p.y for row in app.image.annotations for p in row) * imshape[1])
+	full_data = app.loader[zmin:zmax + 1, xmin:xmax + 1, ymin:ymax + 1]
+
+	return nodes, full_data, (zmin, xmin, ymin)
+
+
+def exportToObj(points, voxel_data,fname,  offset=(0,0,0)):
+	points -= np.array(offset)
+	tri = Delaunay(points)
+
+	faces = mplGetTriFromSimplex(points[:,0], points[:,1], points[:,2], tri.simplices)
+	mesh = trimesh.Trimesh(points, faces)
+	print(f"saving to {fname}")
+	mesh.export(fname[0], file_type='obj')
 
 def plot3Dmesh(points, voxel_data, offset=(0,0,0)):
 	points -= np.array(offset)
-	# Perform Delaunay triangulation
 	tri = Delaunay(points)
-
-	# Create a list to store the colors of each face
-	face_colors = []
-
-	# Iterate over the triangles and compute the average voxel value
-	for simplex in tri.simplices:
-		avg_voxel_value = np.mean([voxel_data[tuple(point)] for point in points[simplex]])
-		face_colors.append(avg_voxel_value)
-
-	# Normalize face_colors to be between 0 and 1
-	face_colors = (face_colors - np.min(face_colors)) / (np.max(face_colors) - np.min(face_colors))
-
-	# Create a colormap
-	cmap = plt.cm.get_cmap("gray")
-
-
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection='3d')
-	#set title
-	ax.set_title("3D Mesh")
-
-	# Create a collection of triangles with the corresponding colors
-	trisurf = ax.plot_trisurf(points[:, 0], points[:, 1], points[:, 2], triangles=tri.simplices)
-
-	# Set the facecolors of the trisurf object
-	trisurf.set_facecolors(cmap(face_colors))
-
+	ax.plot_trisurf(points[:,0], points[:,1], points[:,2], triangles=tri.simplices, cmap=plt.cm.Spectral)
 	plt.show()
+
+
+# def save_to_obj(filename, points, simplices):
+# 	with open(filename, 'w') as f:
+# 		# Write vertex positions
+# 		for point in points:
+# 			f.write("v {} {} {}\n".format(point[0], point[1], point[2]))
+
+# 		# Write faces
+# 		for simplex in simplices:
+# 			f.write("f {} {} {}\n".format(simplex[0], simplex[1] , simplex[2]))
+# 			f.write("f {} {} {}\n".format(simplex[1], simplex[2] , simplex[3]))
+
+
+
+
+
+def mplGetTriFromSimplex(*args, **kwargs):
+    tri, args, kwargs = \
+        Triangulation.get_from_args_and_kwargs(*args, **kwargs)
+
+    triangles = tri.get_masked_triangles()
+    return triangles

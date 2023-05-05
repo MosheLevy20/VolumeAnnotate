@@ -111,6 +111,8 @@ class App(QWidget):
 		self.button_save_2D = QPushButton("Save 2D Projection", self)
 		self.button_save_2D.clicked.connect(self.EH.on_save_2D)
 
+		self.button_export_obj = QPushButton("Export .OBJ", self)
+		self.button_export_obj.clicked.connect(self.EH.on_export_obj)
 		#Show 3d preview
 		self.button_show_3D = QPushButton("Show 3D Preview", self)
 		self.button_show_3D.clicked.connect(self.EH.on_show_3D)
@@ -301,41 +303,44 @@ class App(QWidget):
 
 		# self.layout.addWidget(QLabel("Ink Radius"), 10, 2, Qt.AlignCenter)
 		# self.layout.addWidget(self.slider_ink_radius, 11, 2, 1, 1)
-		# self.inkRadius = 3
+		self.inkRadius = 3
 
 		
 
 		# self.layout.addWidget(QLabel("Contrast"), 14, 1, Qt.AlignRight)
 		# self.layout.addWidget(self.slider_contrast, 14, 2, 1, 1)
-		self.layout.addWidget(QLabel("Shadows"), 12, 1, Qt.AlignRight)
-		self.layout.addWidget(self.slider_shadows, 12, 2, 1, 1)
+		self.layout.addWidget(QLabel("Shadows"), 10, 1, Qt.AlignRight)
+		self.layout.addWidget(self.slider_shadows, 10, 2, 1, 1)
 
-		self.layout.addWidget(QLabel("Midtones"), 13, 1, Qt.AlignRight)
-		self.layout.addWidget(self.slider_midtones, 13, 2, 1, 1)
+		self.layout.addWidget(QLabel("Midtones"), 11, 1, Qt.AlignRight)
+		self.layout.addWidget(self.slider_midtones, 11, 2, 1, 1)
 
-		self.layout.addWidget(QLabel("Highlights"), 14, 1, Qt.AlignRight)
-		self.layout.addWidget(self.slider_highlights, 14, 2, 1, 1)
+		self.layout.addWidget(QLabel("Highlights"), 12, 1, Qt.AlignRight)
+		self.layout.addWidget(self.slider_highlights, 12, 2, 1, 1)
 
 
 		# self.layout.addWidget(self.button_ink, 15, 1, 1, 1)
 		# self.layout.addWidget(self.button_ink_all, 15, 2, 1, 1)
 
-		self.layout.addWidget(self.button_invert, 16, 1, Qt.AlignTop)
-		self.layout.addWidget(self.button_copy, 16, 2, Qt.AlignTop)
+		self.layout.addWidget(self.button_invert, 13, 1, Qt.AlignTop)
+		self.layout.addWidget(self.button_copy, 13, 2, Qt.AlignTop)
 
-		self.layout.addWidget(self.button_edge, 19, 1, 1, 2, Qt.AlignTop)
+		
 
-		self.layout.addWidget(self.edgeDepthTxt, 17, 1, 1, 2, Qt.AlignCenter)
-		self.layout.addWidget(self.slider_edge, 18, 1, 1, 2)
+		self.layout.addWidget(self.edgeDepthTxt, 14, 1, 1, 2, Qt.AlignCenter)
+		self.layout.addWidget(self.slider_edge, 15, 1, 1, 2)
+		self.layout.addWidget(self.button_edge, 16, 1, 1, 2, Qt.AlignTop)
 
 		hline = QFrame()
 		hline.setFrameShape(QFrame.HLine)
-		self.layout.addWidget(hline, 20, 1, 1, 3)
+		self.layout.addWidget(hline, 17, 1, 1, 3)
+		self.layout.addWidget(self.button_export_obj, 18, 1, 1, 2, Qt.AlignCenter)
+		self.layout.addWidget(self.button_show_3D, 19, 1, 1, 2, Qt.AlignCenter)
 
 		self.layout.addWidget(self.button_save, 21, 1, 1, 2, Qt.AlignCenter)
 		self.layout.addWidget(self.button_load, 22, 1, 1, 2, Qt.AlignCenter)
 		
-		self.layout.addWidget(self.button_show_3D, 23, 1, 1, 2, Qt.AlignCenter)
+		
 
 		self.layout.addWidget(QLabel("Projection Style:"), 24, 1, 1, 2, Qt.AlignCenter)
 		self.layout.addWidget(self.unwrapStyleWidget, 25, 1, 1, 2, Qt.AlignCenter)
