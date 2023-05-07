@@ -56,6 +56,7 @@ def findEdges(initialEdge, imageIndices, radius, loader):
 			f = (np.iinfo(np.uint16).max / np.iinfo(np.uint8).max)
 		else:
 			f = 1
+			print(type(currentImage[0,0]),"imtype")
 
 
 		currentImage = cv2.convertScaleAbs(
