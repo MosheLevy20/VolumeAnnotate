@@ -78,7 +78,7 @@ class mImage(object):
 		x1 = int(self.imshape[0]*self.scale)
 		y1 = int(self.imshape[1]*self.scale)
 		self.loaded_shape = (x1, y1)
-		print("getImg",frame_index, x0, x1, y0, y1)
+		#print("getImg",frame_index, x0, x1, y0, y1)
 		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
 		img = cv2.resize(img, (self.display_height, self.display_width))
 		img = self.normalize_image(img=img)

@@ -46,7 +46,7 @@ def findEdges(initialEdge, imageIndices, radius, loader):
 		center = [(bounds[1]+bounds[0])/2, (bounds[3]+bounds[2])/2]
 		relBounds = [bounds[0]-center[0], bounds[1]-center[0], bounds[2]-center[1], bounds[3]-center[1]]
 		#set the new bounding box to be 2x the size of the original
-		newBounds = [center[0]+relBounds[0]*2, center[0]+relBounds[1]*2, center[1]+relBounds[2]*2, center[1]+relBounds[3]*2]
+		newBounds = [center[0]+relBounds[0]*3//2, center[0]+relBounds[1]*3//2, center[1]+relBounds[2]*3//2, center[1]+relBounds[3]*3//2]
 
 		currentImage = loader[i, int(newBounds[2]):int(newBounds[3]), int(newBounds[0]):int(newBounds[1])]
 

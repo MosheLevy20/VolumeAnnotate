@@ -13,7 +13,7 @@ from scipy.spatial import Delaunay
 import trimesh
 from matplotlib.tri._triangulation import Triangulation
 
-
+import matplotlib.pyplot as plt
 
 
 #point annotation object
@@ -202,10 +202,13 @@ def getPointsAndVoxels(app):
 	# Iterate through the rows of interpolated
 	for i in range(len(app.image.interpolated)):
 		row = app.image.interpolated[i]
-
+		if len(row) == 0:
+			continue
+		nrow = []
 		# Add nodes to the nodes list
 		for p in row:
-			nodes.append((i,int(p.x * imshape[0]), int(p.y * imshape[1])))
+			nrow.append((i,p.x * imshape[0], p.y * imshape[1]))
+		nodes.append(nrow)
 
 
 
@@ -221,14 +224,161 @@ def getPointsAndVoxels(app):
 	return nodes, full_data, (zmin, xmin, ymin)
 
 
-def exportToObj(points, voxel_data,fname,  offset=(0,0,0)):
-	points -= np.array(offset)
-	tri = Delaunay(points)
-
-	faces = mplGetTriFromSimplex(points[:,0], points[:,1], points[:,2], tri.simplices)
-	mesh = trimesh.Trimesh(points, faces)
+def exportToObj(app, fname):
+	# points -= np.array(offset)
+	points, voxel_data, offset = getPointsAndVoxels(app)
+	mesh = getAnnMesh(points, voxel_data, offset=offset)
 	print(f"saving to {fname}")
-	mesh.export(fname[0], file_type='obj')
+	mesh.export(fname, file_type='obj')
+
+def getAnnMesh(points, voxel_data, offset=(0,0,0)):
+
+	for index, i in enumerate(points):
+		for jindex, j in enumerate(i):
+			points[index][jindex] = (j[0]-offset[0], j[1]-offset[1], j[2]-offset[2])
+	H = len(points)
+	W = max([len(i) for i in points])
+	im = np.zeros((H, W*2))
+	verts = np.zeros((H, W*2, 3))
+	mask = np.zeros((H, W*2))
+	cy = H//2
+	Center = points[cy][len(points[cy])//2]
+	for i in range(len(points)):
+		if len(points[i]) > 0:
+			#find the center of the slice by finding the point with min distance from true center
+			center = points[i][0]
+			centerIndex = 0
+			for jindex, j in enumerate(points[i]):
+				if np.sqrt((j[0]-Center[0])**2 + (j[1]-Center[1])**2) < np.sqrt((center[0]-Center[0])**2 + (center[1]-Center[1])**2):
+					center = j
+					centerIndex = jindex
+			#populate the image with the points to the left and right of the center
+			n=2
+			for jindex, j in enumerate(points[i]):
+				
+				z,y,x = j
+				
+				region = voxel_data[i, int(y-n):int(y+n+1), int(x-n):int(x+n+1)]
+				val = np.mean(region, axis=(0,1))
+				im[i, W - (centerIndex-jindex)] = val
+				verts[i, W - (centerIndex-jindex)] = np.array(j)
+				mask[i, W - (centerIndex-jindex)] = 1
+	#crop the arrays so that there are no zeros
+	_, sliceArr = largest_non_zero_subarray(mask)
+	im = im[sliceArr[0]:sliceArr[1], sliceArr[2]:sliceArr[3]]
+	verts = verts[sliceArr[0]:sliceArr[1], sliceArr[2]:sliceArr[3]]
+	#check for duplicates in verts 
+	#first reshape verts to be 1d list of points
+	
+	verts, faces = createAnnMesh(verts)
+	
+	mesh = create_trimesh_with_brightness(verts, faces, im.flatten())
+		
+	return mesh
+
+def create_trimesh_with_brightness(verts, faces, brightnesses):
+    """
+    Create a trimesh.Trimesh object with vertex brightness values.
+
+    Args:
+    verts (numpy.ndarray): An array of vertex coordinates with shape (N, 3).
+    faces (numpy.ndarray): An array of face indices with shape (M, 3).
+    brightnesses (numpy.ndarray): An array of brightness values with shape (N,).
+
+    Returns:
+    trimesh.Trimesh: A trimesh.Trimesh object with vertex brightness attributes.
+    """
+    if len(verts) != len(brightnesses):
+        raise ValueError("The length of 'verts' and 'brightnesses' must be the same.")
+
+    mesh = trimesh.Trimesh(vertices=verts, faces=faces)
+    brightnesses_normalized = (brightnesses - brightnesses.min()) / (brightnesses.max() - brightnesses.min())
+    vertex_colors = np.zeros((len(verts), 4))
+    vertex_colors[:, :3] = brightnesses_normalized[:, np.newaxis] * np.ones(3)  # Broadcast brightness to RGB channels
+    vertex_colors[:, 3] = 1.0  # Set alpha channel to 1.0 (fully opaque)
+    vertex_colors *= 255  # Scale the values to the range [0, 255]
+    mesh.visual.vertex_colors = vertex_colors.astype(np.uint8)
+
+    return mesh
+
+def createAnnMesh(points_2d):
+    # Get dimensions of the 2D array
+    rows, cols = points_2d.shape[0], points_2d.shape[1]
+
+    # Flatten the 2D array of points to a 1D array of vertices
+    verts = points_2d.reshape(-1, 3)
+
+    # Create an empty list to store the triangles
+    triangles = []
+
+    for r in range(rows - 1):
+        for c in range(cols - 1):
+            # Calculate the indices of the 4 points forming a square
+            p1 = r * cols + c
+            p2 = r * cols + c + 1
+            p3 = (r + 1) * cols + c
+            p4 = (r + 1) * cols + c + 1
+
+            # Create two triangles to form a square by connecting neighboring points and a diagonal
+            triangle1 = [p1, p2, p4]
+            triangle2 = [p1, p4, p3]
+
+            # Add the triangles to the list
+            triangles.extend([triangle1, triangle2])
+
+    return np.array(verts), np.array(triangles)
+
+
+
+
+def largest_non_zero_subarray(arr):
+    arr_np = np.array(arr, dtype=int)
+    binary_matrix = (arr_np > 0).astype(int)
+
+    rows, cols = binary_matrix.shape
+    largest_area = 0
+    largest_subarray = []
+    largest_slice = (0, 0, 0, 0)
+    dp = np.zeros((rows, cols), dtype=int)
+
+    for i in range(rows):
+        for j in range(cols):
+            if i == 0:
+                dp[i, j] = binary_matrix[i, j]
+            elif binary_matrix[i, j] == 1:
+                dp[i, j] = dp[i - 1, j] + 1
+
+    for i in range(rows):
+        stack = []
+        left = np.zeros(cols, dtype=int)
+        right = np.zeros(cols, dtype=int)
+
+        for j in range(cols):
+            while stack and dp[i, stack[-1]] > dp[i, j]:
+                right[stack.pop()] = j
+            left[j] = stack[-1] if stack else -1
+            stack.append(j)
+
+        while stack:
+            right[stack.pop()] = cols
+
+        for j in range(cols):
+            area = (right[j] - left[j] - 1) * dp[i, j]
+            if area > largest_area:
+                largest_area = area
+                largest_subarray = arr_np[i - dp[i, j] + 1:i + 1, left[j] + 1:right[j]]
+                largest_slice = (i - dp[i, j] + 1, i + 1, left[j] + 1, right[j])
+
+    return largest_subarray, largest_slice
+
+# def exportToObj(points, voxel_data,fname,  offset=(0,0,0)):
+# 	points -= np.array(offset)
+# 	tri = Delaunay(points)
+
+# 	faces = mplGetTriFromSimplex(points[:,0], points[:,1], points[:,2], tri.simplices)
+# 	mesh = trimesh.Trimesh(points, faces)
+# 	print(f"saving to {fname}")
+# 	mesh.export(fname[0], file_type='obj')
 
 # def exportToObj(points, voxel_data, fname, offset=(0, 0, 0)):
 # 	points -= np.array(offset)

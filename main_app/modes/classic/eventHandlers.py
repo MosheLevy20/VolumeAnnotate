@@ -77,13 +77,13 @@ class EventHandler(EventHandlerBase):
 		fname = QFileDialog.getSaveFileName(
 			self.app, "Save File", os.getcwd(), "Obj Files (*.obj)"
 		)
-		nodes, full_data, offset = getPointsAndVoxels(self.app)
-		exportToObj(np.array(nodes), full_data, fname, offset=offset)
+		
+		exportToObj(self.app, fname[0])
 
 	def on_show_3D(self, event):
 		nodes, full_data, offset = getPointsAndVoxels(self.app)
 		
-		plot3Dmesh(np.array(nodes), full_data, offset=offset)
+		#plot3Dmesh(np.array(nodes), full_data, offset=offset)
 
 
 	def on_ink(self, event):
