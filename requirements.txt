@@ -6,6 +6,6 @@ zarr
 PyQt5
 requests
 beautifulsoup4
-matplotlib
 scipy
+trimesh
 

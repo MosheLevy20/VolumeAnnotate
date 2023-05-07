@@ -9,11 +9,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from scipy.spatial import Delaunay
 import trimesh
-from matplotlib.tri._triangulation import Triangulation
+# from matplotlib.tri._triangulation import Triangulation
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 #point annotation object
@@ -253,7 +252,7 @@ def getAnnMesh(points, voxel_data, offset=(0,0,0)):
 					center = j
 					centerIndex = jindex
 			#populate the image with the points to the left and right of the center
-			n=2
+			n=0
 			for jindex, j in enumerate(points[i]):
 				
 				z,y,x = j
