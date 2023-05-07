@@ -303,7 +303,7 @@ class Loader:
 			if (3 * est_size) >= self.max_mem_gb:
 				return zslice, xslice, yslice
 			print("made it here")
-			zslice = pad_slice(zslice, self.shape[0])
+			zslice = pad_slice(zslice, self.shape[0], int_add=1)
 		elif self.chunk_type == "cuboid":
 			# First pad in Z by 5 in each direction if we have space, then in XY
 			zslice = pad_slice(

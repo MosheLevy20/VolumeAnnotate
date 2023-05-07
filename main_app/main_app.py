@@ -129,12 +129,15 @@ class StartupDialog(QDialog):
 		layout.addWidget(QLabel("Select data source:"))
 
 		# Add radio buttons for data source options
-		self.stream_data = QRadioButton("Stream data")
+		#self.stream_data = QRadioButton("Stream data (Disabled for now)")
+		layout.addWidget(QLabel("Stream data disabled for now"))
 		self.local_data = QRadioButton("Load data from local directory")
-		layout.addWidget(self.stream_data)
+		#layout.addWidget(self.stream_data)
 		layout.addWidget(self.local_data)
 
 		# Add a button to browse for a local directory (disabled by default)
+		#add text for directory selection
+		layout.addWidget(QLabel("Select local directory:"))
 		self.browse_button = QPushButton("Browse")
 		self.browse_button.setEnabled(True)
 		layout.addWidget(self.browse_button)
@@ -147,6 +150,9 @@ class StartupDialog(QDialog):
 		#add a mode selection dropdown
 		self.modeSelect = QComboBox()
 		self.modeSelect.addItems(modeFolders)
+		#add text for mode selection
+		layout.addWidget(QLabel("Select mode:"))
+		layout.addWidget(self.modeSelect)
 
 
 		# Add a launch button
@@ -154,7 +160,7 @@ class StartupDialog(QDialog):
 		layout.addWidget(launch_button)
 
 		# Connect signals and slots
-		self.stream_data.toggled.connect(self.update_browse_button)
+		#self.stream_data.toggled.connect(self.update_browse_button)
 		self.browse_button.clicked.connect(self.browse_for_directory)
 		launch_button.clicked.connect(self.launch_app)
 
@@ -179,17 +185,9 @@ class StartupDialog(QDialog):
 			self.directory_path.setText(directory)
 
 	def launch_app(self):
-		# Get user inputs
-
-
-		# Close the startup dialog
 		self.accept()
-	
-		print("Startup dialog initialized")
-		
-		#etc
 
-		win = App(STREAM=self.stream_data.isChecked(), folder=self.directory_path.text(), mode=self.modeSelect.currentText())
+		win = App(STREAM=False, folder=self.directory_path.text(), mode=self.modeSelect.currentText())
 		print("App initialized")
 
 def run():
