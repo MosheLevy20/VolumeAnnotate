@@ -79,6 +79,13 @@ class EventHandler(EventHandlerBase):
 		)
 		
 		exportToObj(self.app, fname[0])
+	
+	def on_export_to_volpkg(self, event):
+		fname = QFileDialog.getSaveFileName(
+			self.app, "Save File", os.getcwd(), "Volpkg Files (*.volpkg)"
+		)
+		if fname[0] != "":
+			Volpkg(self.app, fname[0])
 
 	def on_show_3D(self, event):
 		nodes, full_data, offset = getPointsAndVoxels(self.app)

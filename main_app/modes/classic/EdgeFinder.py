@@ -61,7 +61,7 @@ def findEdges(initialEdge, imageIndices, radius, loader):
 
 		currentImage = cv2.convertScaleAbs(
 			(currentImage / f).astype(np.uint8), 
-			alpha=1.5, 
+			alpha=1.5,
 			beta=0
 		)
 	

@@ -35,9 +35,11 @@ class App(QWidget):
 			img_array = RemoteZarr(urls[scroll], username, password, downpath, max_storage_gb=20)
 		else:
 			print(folder)
-			img_array, _ = load_tif(folder)
+			img_array, tiffs = load_tif(folder)
+			self.tiffs = [folder + "/" + t for t in tiffs]
 			print(f"img_array: {img_array.shape}")
 		self.loader = Loader(img_array, STREAM, max_mem_gb=8)
+		
 
 		self._frame_index = 0
 		if STREAM:

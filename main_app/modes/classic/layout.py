@@ -47,6 +47,9 @@ def addItems(app):
 
     app.button_export_obj = QPushButton("Export .OBJ", app)
     app.button_export_obj.clicked.connect(app.EH.on_export_obj)
+
+    app.button_export_volpkg = QPushButton("Export .volpkg", app)
+    app.button_export_volpkg.clicked.connect(app.EH.on_export_to_volpkg)
     #Show 3d preview
     #app.button_show_3D = QPushButton("Show 3D Preview", app)
     #app.button_show_3D.clicked.connect(app.EH.on_show_3D)
@@ -275,6 +278,7 @@ def createLayout(app):
     hline.setFrameShape(QFrame.HLine)
     app.layout.addWidget(hline, 17, 1, 1, 3)
     app.layout.addWidget(app.button_export_obj, 18, 1, 1, 2, Qt.AlignCenter)
+    app.layout.addWidget(app.button_export_volpkg, 19, 1, 1, 2, Qt.AlignCenter)
     #app.layout.addWidget(app.button_show_3D, 19, 1, 1, 2, Qt.AlignCenter)
 
     app.layout.addWidget(app.button_save, 21, 1, 1, 2, Qt.AlignCenter)
