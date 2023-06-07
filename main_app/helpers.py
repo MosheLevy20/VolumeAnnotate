@@ -208,7 +208,7 @@ def getPointsAndVoxels(app):
 		nrow = []
 		# Add nodes to the nodes list
 		for p in row:
-			nrow.append((i,p.x * imshape[0], p.y * imshape[1]))
+			nrow.append((i,p.x * imshape[1], p.y * imshape[0]))
 		nodes.append(nrow)
 
 
@@ -452,6 +452,7 @@ class Volpkg(object):
 		
 
 	def saveVCPS(self, pathdir, ordered=True, point_type='double', encoding='utf-8'):
+		print("saving vcps")
 		annotations = self.stripAnnoatation(self.app)
 		#reorder the last axis from 012 to 120
 		Xs = annotations[:,:,0]
