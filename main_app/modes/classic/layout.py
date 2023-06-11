@@ -1,8 +1,10 @@
 from main_app.helpers import *
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QSizePolicy
 
 def getLayoutItems(app):
     #returns dict of layout, widgets - name and object
-    app.layout = QGridLayout()
+    #app.layout = QGridLayout()
     addItems(app)
     createLayout(app)
     
@@ -210,84 +212,64 @@ def addItems(app):
     app.frame_edit_display.setText(str(app._frame_index + 1))
     app.frame_edit_display.setValidator(QIntValidator(1, app._frame_count + 1))
 
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 
 def createLayout(app):
-    # app.layout.rowStretch(2)#didn't work, try:
-    app.layout.addWidget(app.label, 0, 0, 30, 1)
-    app.layout.addWidget(app.button_zoom_in, 2, 2, Qt.AlignRight)
-    # the parameters are: row, column, rowspan, colspan, alignment
-    app.layout.addWidget(app.button_zoom_out, 2, 1, Qt.AlignLeft)
-    app.layout.addWidget(app.button_next_frame, 1, 2, Qt.AlignRight)
-    app.layout.addWidget(app.button_previous_frame, 1, 1, Qt.AlignLeft)
+    # Create main layout
+    main_layout = QHBoxLayout()
 
-    app.layout.addWidget(app.frame_number, 2, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.frame_edit_display, 3, 1, 1, 1, Qt.AlignLeft)
-    app.layout.addWidget(app.button_frame_change, 3, 1, 1, 2, Qt.AlignRight)
+    # Create control layout
+    control_layout = QVBoxLayout()
+    image_layout = QVBoxLayout()
 
-    hline = QFrame()
-    hline.setFrameShape(QFrame.HLine)
-    app.layout.addWidget(hline, 4, 1, 1, 3)
+    # Add widgets to control layout
+    control_layout.addWidget(app.button_zoom_in)
+    control_layout.addWidget(app.button_zoom_out)
+    control_layout.addWidget(app.button_next_frame)
+    control_layout.addWidget(app.button_previous_frame)
 
-    app.layout.addWidget(app.mouseModeWidget, 4, 1, 6, 1)
-    app.layout.addWidget(app.button_show_annotations, 5, 2, 1, 1)
+    #control_layout.addWidget(app.label)
+    # control_layout.addWidget(app.frame_number)
+    # control_layout.addWidget(app.frame_edit_display)
+    # control_layout.addWidget(app.button_frame_change)
 
-    #app.layout.addWidget(QLabel("Annotation Color:"), 7, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.annotationColorMenu, 6, 2, 1, 1)
+    # control_layout.addWidget(app.mouseModeWidget)
+    # control_layout.addWidget(app.button_show_annotations)
+    # control_layout.addWidget(app.annotationColorMenu)
+    # control_layout.addWidget(app.slider_annotation_radius)
 
-    app.layout.addWidget(QLabel("Annotation Radius"), 7, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.slider_annotation_radius, 8, 2, 1, 1)
+    # control_layout.addWidget(app.slider_shadows)
+    # control_layout.addWidget(app.slider_midtones)
+    # control_layout.addWidget(app.slider_highlights)
 
-    #hline = QFrame()
-    hline.setFrameShape(QFrame.HLine)
-    app.layout.addWidget(hline, 9, 1, 1, 3)
+    # control_layout.addWidget(app.button_invert)
+    # control_layout.addWidget(app.button_copy)
 
-    # app.layout.addWidget(QLabel("Ink Threshold"), 10, 1, Qt.AlignCenter)
-    # app.layout.addWidget(app.slider, 11, 1, 1, 1)
+    # control_layout.addWidget(app.slider_edge)
+    # control_layout.addWidget(app.button_edge)
 
-    # app.layout.addWidget(QLabel("Ink Radius"), 10, 2, Qt.AlignCenter)
-    # app.layout.addWidget(app.slider_ink_radius, 11, 2, 1, 1)
-    app.inkRadius = 3
+    # control_layout.addWidget(app.button_export_obj)
+    # control_layout.addWidget(app.button_export_volpkg)
+    # control_layout.addWidget(app.button_save)
+    # control_layout.addWidget(app.button_load)
 
-    
+    # control_layout.addWidget(app.unwrapStyleWidget)
+    # control_layout.addWidget(app.button_save_2D)
 
-    # app.layout.addWidget(QLabel("Contrast"), 14, 1, Qt.AlignRight)
-    # app.layout.addWidget(app.slider_contrast, 14, 2, 1, 1)
-    app.layout.addWidget(QLabel("Shadows"), 10, 1, Qt.AlignRight)
-    app.layout.addWidget(app.slider_shadows, 10, 2, 1, 1)
+    app.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-    app.layout.addWidget(QLabel("Midtones"), 11, 1, Qt.AlignRight)
-    app.layout.addWidget(app.slider_midtones, 11, 2, 1, 1)
-
-    app.layout.addWidget(QLabel("Highlights"), 12, 1, Qt.AlignRight)
-    app.layout.addWidget(app.slider_highlights, 12, 2, 1, 1)
-
-
-    # app.layout.addWidget(app.button_ink, 15, 1, 1, 1)
-    # app.layout.addWidget(app.button_ink_all, 15, 2, 1, 1)
-
-    app.layout.addWidget(app.button_invert, 13, 1, Qt.AlignTop)
-    app.layout.addWidget(app.button_copy, 13, 2, Qt.AlignTop)
+    for i in range(control_layout.count()):
+        widget = control_layout.itemAt(i).widget()
+        if widget is not None:  # Skip layout spacers
+            widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    # Add image to image layout
+    image_layout.addWidget(app.label)
+    # Add image layout to main layout
+    main_layout.addLayout(image_layout)
+    # Add control layout to main layout
+    main_layout.addLayout(control_layout)
 
     
 
-    app.layout.addWidget(app.edgeDepthTxt, 14, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.slider_edge, 15, 1, 1, 2)
-    app.layout.addWidget(app.button_edge, 16, 1, 1, 2, Qt.AlignTop)
-
-    hline = QFrame()
-    hline.setFrameShape(QFrame.HLine)
-    app.layout.addWidget(hline, 17, 1, 1, 3)
-    app.layout.addWidget(app.button_export_obj, 18, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.button_export_volpkg, 19, 1, 1, 2, Qt.AlignCenter)
-    #app.layout.addWidget(app.button_show_3D, 19, 1, 1, 2, Qt.AlignCenter)
-
-    app.layout.addWidget(app.button_save, 21, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.button_load, 22, 1, 1, 2, Qt.AlignCenter)
-    
-    
-
-    app.layout.addWidget(QLabel("Projection Style:"), 24, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.unwrapStyleWidget, 25, 1, 1, 2, Qt.AlignCenter)
-    app.layout.addWidget(app.button_save_2D, 26, 1, 1, 2, Qt.AlignCenter)
-
-    
+    # Set layout
+    app.layout = main_layout
