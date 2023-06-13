@@ -306,7 +306,7 @@ class EventHandler(EventHandlerBase):
 			super().mouseMoveEvent(event)
 		except NotImplementedError:
 			x, y = getRelCoords(self.app, event.globalPos())
-			print(f"dragging mouse{x,y}")
+			#print(f"dragging mouse{x,y}")
 			if self.app.mouseMode == "Move Points":
 				if self.app.dragging:
 
