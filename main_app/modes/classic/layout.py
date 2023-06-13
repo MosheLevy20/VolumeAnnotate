@@ -2,6 +2,18 @@ from main_app.helpers import *
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtWidgets import QSizePolicy
 
+class MyScrollArea(QScrollArea):
+    def wheelEvent(self, event):
+        if event.modifiers() == Qt.ShiftModifier:
+            #super().wheelEvent(event)
+            # event.accept()
+            if event.angleDelta().y() > 0:
+                self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - 5)
+            else:
+                self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + 5)
+        else:
+            super().wheelEvent(event)
+
 def getLayoutItems(app):
     #returns dict of layout, widgets - name and object
     #app.layout = QGridLayout()
@@ -215,7 +227,7 @@ def addItems(app):
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 
 def createLayout(app):
-    scroll = QScrollArea()
+    scroll = MyScrollArea()
     scroll.setWidget(app.label)
     scroll.setWidgetResizable(True)
     # Create main layout

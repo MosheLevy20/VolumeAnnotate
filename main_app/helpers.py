@@ -420,7 +420,7 @@ def largest_non_zero_subarray(arr):
 #pass in list of tiff files to put in volume, if volume doesn't exist already?
 #TODO check if point coords ar normalized right
 class Volpkg(object):
-	def __init__(self, app, folder, saveTiffs=False):
+	def __init__(self, app, folder, saveTiffs=True):
 		self.app = app
 		self.sessionId0 = app.sessionId0
 		#make spaces friendly e.g. by adding \ before spaces (does it depend on OS?)
