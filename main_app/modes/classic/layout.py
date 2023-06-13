@@ -151,12 +151,12 @@ def addItems(app):
     # slider for edge detection number of frames
     app.slider_edge = QSlider(Qt.Horizontal, app)
     app.slider_edge.setMinimum(0)
-    app.slider_edge.setMaximum(100)
+    app.slider_edge.setMaximum(200)
     app.slider_edge.setValue(10)
     app.slider_edge.valueChanged.connect(app.EH.on_slider_edge_change)
     app.edgeDepth = 10
     app.edgeDepthTxt = QLabel(
-        f"Edge Detection: Number of Frames = {app.edgeDepth}"
+        f"Num Frames = {app.edgeDepth}"
     )
 
     # create menu for mouse modes
@@ -275,7 +275,7 @@ def createLayout(app):
     # control_layout2.addStretch(3)
     control_layout1.addWidget(app.button_invert)
     
-    control_layout1.addWidget(QLabel("Edge Detection Num. Frames"))
+    control_layout1.addWidget(app.edgeDepthTxt)
     control_layout1.addWidget(app.slider_edge)
     control_layout1.addWidget(app.button_edge)
 

@@ -163,7 +163,7 @@ class EventHandler(EventHandlerBase):
 	def on_slider_edge_change(self, event):
 		self.app.edgeDepth = self.app.slider_edge.value()
 		self.app.edgeDepthTxt.setText(
-			f"Edge Detection: Number of Frames = {self.app.edgeDepth}"
+			f"Num Frames = {self.app.edgeDepth}"
 		)
 		# self.app.label_edge.setText(f"Edge Depth: {self.app.edgeDepth}")
 	def keyPressEvent(self, event):
