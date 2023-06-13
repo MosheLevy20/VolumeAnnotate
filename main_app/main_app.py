@@ -35,8 +35,17 @@ class App(QWidget):
 			img_array = RemoteZarr(urls[scroll], username, password, downpath, max_storage_gb=20)
 		else:
 			print(folder)
-			img_array, tiffs = load_tif(folder)
-			self.tiffs = [folder + "/" + t for t in tiffs]
+			if folder.endswith(".volpkg"):
+				self.fromVolpkg = True
+				self.volpkgFolder = folder
+				# vol = os.listdir(os.join(folder,"volumes"))[0]
+				#create pop up to select volume
+				self.vol = QFileDialog.getExistingDirectory(self, "Select Volume", os.path.join(folder,"volumes"))
+				img_array, tiffs = load_tif(self.vol)
+			else:
+				self.fromVolpkg = False
+				img_array, tiffs = load_tif(folder)
+				self.tiffs = [folder + "/" + t for t in tiffs]
 			print(f"img_array: {img_array.shape}")
 		self.loader = Loader(img_array, STREAM, max_mem_gb=8)
 		

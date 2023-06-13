@@ -420,17 +420,17 @@ def largest_non_zero_subarray(arr):
 #pass in list of tiff files to put in volume, if volume doesn't exist already?
 #TODO check if point coords ar normalized right
 class Volpkg(object):
-	def __init__(self, app, folder, saveTiffs=True):
+	def __init__(self, app, folder, saveTiffs=False):
 		self.app = app
 		self.sessionId0 = app.sessionId0
 		#make spaces friendly e.g. by adding \ before spaces (does it depend on OS?)
 		self.saveTiffs = saveTiffs
-
+		self.basepath = None
 		#check if folder exists
 		if os.path.exists(folder):
-			if folder.endswith(".volpkg"):
+			if folder.endswith(".volpkg") and app.fromVolpkg:
 				self.basepath = folder
-				self.volume = os.listdir(f"{self.basepath}/volumes")[0]
+				self.volume = app.vol.split("/")[-1]
 				#get all volumes in the folder
 			else:
 				print("Folder must end with .volpkg")
@@ -478,7 +478,8 @@ class Volpkg(object):
 				json.dump(config, f)
 
 		#make our path
-		pathToPath = f"{self.basepath}/paths/{self.sessionId0}"
+		#pathToPath = f"{self.basepath}/paths/{self.sessionId0}"
+		pathToPath = os.path.join(self.basepath, "paths", self.sessionId0)
 		os.mkdir(pathToPath)
 
 		self.saveVCPS(pathToPath)
