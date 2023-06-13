@@ -264,6 +264,7 @@ class EventHandler(EventHandlerBase):
 					self.app.draggingOffset = np.array([x, y]) - np.array(
 						[closest.x, closest.y]
 					)
+					print(f"dragging offset: {self.app.draggingOffset}")
 				self.app._update_image()
 
 
@@ -304,15 +305,19 @@ class EventHandler(EventHandlerBase):
 		try:
 			super().mouseMoveEvent(event)
 		except NotImplementedError:
-			x, y = getRelCoords(self.app, event.pos())
+			x, y = getRelCoords(self.app, event.globalPos())
+			print(f"dragging mouse{x,y}")
 			if self.app.mouseMode == "Move Points":
 				if self.app.dragging:
+
 					self.app.image.annotations[self.app.draggingFrame][
 						self.app.draggingIndex
 					].x = (x - self.app.draggingOffset[0])
+
 					self.app.image.annotations[self.app.draggingFrame][
 						self.app.draggingIndex
 					].y = (y - self.app.draggingOffset[1])
+
 					self.app.image.interpolated[self.app.draggingFrame] = interpolatePoints(
 						self.app.image.annotations[self.app.draggingFrame],
 						self.app.image.imshape,
