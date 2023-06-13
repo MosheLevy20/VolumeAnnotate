@@ -126,6 +126,24 @@ def interpolatePoints(points, imShape):
 	return interp
 
 
+class ImageLabel(QLabel):
+	def __init__(self, pmap, app):
+		super().__init__()
+		self.original_pixmap = pmap
+		self.setPixmap(self.original_pixmap)
+		self.app = app
+
+	def resizeEvent(self, event):
+		self.update()
+	def update(self):
+		pmap = self.app.image.getImg(self.app._frame_index)
+		if pmap.isNull(): 
+			return
+
+		scaled_pixmap = pmap.scaled(self.width(), self.height(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+		self.setPixmap(scaled_pixmap)
+
+
 def getImFrameCoords(app, pos):
 	"""Returns the coordinates of the mouse reported as a fraction
 	of the way through the image frame.
@@ -137,21 +155,40 @@ def getImFrameCoords(app, pos):
 	return x,y
 
 #get the coordinates of the mouse relative to the full image
+# def getRelCoords(app, pos):
+# 	"""Returns the coordinates of the mouse reported as a fraction
+# 	of the way through the full image.
+
+# 	Note that the full image may not be currently displayed, so we have
+# 	to adjust the location appropriately.
+# 	"""
+# 	pos = getUnscaledRelCoords(app, pos)
+# 	image_rect = app.label.pixmap().rect()
+# 	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
+# 	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
+# 	x /= image_rect.width()
+# 	y /= image_rect.height()
+# 	return x,y
+import copy
 def getRelCoords(app, pos):
-	"""Returns the coordinates of the mouse reported as a fraction
-	of the way through the full image.
-
-	Note that the full image may not be currently displayed, so we have
-	to adjust the location appropriately.
-	"""
-	pos = getUnscaledRelCoords(app, pos)
+	# Get the position of the event relative to the image
+	pos = app.label.mapFromGlobal(pos)
+	
+	offset = copy.deepcopy(app.image.offset)
+	offset[0] /= app.pixelSize0/app.image.scale
+	offset[1] /= app.pixelSize1/app.image.scale
+	print(offset)
+	# Get the size of the image
+	image_size = app.label.size()
 	image_rect = app.label.pixmap().rect()
-	x = pos.x()*app.image.scale+app.image.offset[1]/app.pixelSize1
-	y = pos.y()*app.image.scale+app.image.offset[0]/app.pixelSize0
-	x /= image_rect.width()
-	y /= image_rect.height()
-	return x,y
+	x = pos.x()*app.image.scale+offset[1]
+	y = pos.y()*app.image.scale+offset[0]
+	
+	# Compute the relative position in the range [0, 1]
+	rel_pos_x = x /image_rect.width()
+	rel_pos_y = y / image_rect.height()
 
+	return (rel_pos_x, rel_pos_y)
 
 def getUnscaledRelCoords(app, pos):
 	"""Takes the mouse position and returns the x, y coordinates represented
@@ -383,10 +420,11 @@ def largest_non_zero_subarray(arr):
 #pass in list of tiff files to put in volume, if volume doesn't exist already?
 #TODO check if point coords ar normalized right
 class Volpkg(object):
-	def __init__(self, app, folder):
+	def __init__(self, app, folder, saveTiffs=False):
 		self.app = app
 		self.sessionId0 = app.sessionId0
 		#make spaces friendly e.g. by adding \ before spaces (does it depend on OS?)
+		self.saveTiffs = saveTiffs
 
 		#check if folder exists
 		if os.path.exists(folder):
@@ -408,19 +446,19 @@ class Volpkg(object):
 			#volume name
 			os.mkdir(f"{self.basepath}/volumes/{self.sessionId0}")
 			self.volume = self.sessionId0
-
-			for i, tif in enumerate(self.tifstack):
-				#use cp command
-				to = f"{self.basepath}/volumes/{self.sessionId0}/"
-				#replace spaces with \
-				tif = tif.replace(" ", "\\ ")
-				to = to.replace(" ", "\\ ")
-				#get tif name
-				tifName = tif.split("/")[-1]
-				#strip so it only has n digits, where n is int(log10(len(tifstack)))+1
-				n = int(np.log10(len(self.tifstack)))+1
-				tifName = tifName[n+1:]
-				os.system(f'cp {tif} {to}/{tifName}')
+			if self.saveTiffs:
+				for i, tif in enumerate(self.tifstack):
+					#use cp command
+					to = f"{self.basepath}/volumes/{self.sessionId0}/"
+					#replace spaces with \
+					tif = tif.replace(" ", "\\ ")
+					to = to.replace(" ", "\\ ")
+					#get tif name
+					tifName = tif.split("/")[-1]
+					#strip so it only has n digits, where n is int(log10(len(tifstack)))+1
+					n = int(np.log10(len(self.tifstack)))+1
+					tifName = tifName[n+1:]
+					os.system(f'cp {tif} {to}/{tifName}')
 			
 			height,width = self.app.image.imshape
 			#save meta.json in volume folder, form: {"height":560,"max":65535.0,"min":0.0,"name":"ca","slices":35,"type":"vol","uuid":"20230511123535","voxelsize":10.0,"width":560}

@@ -48,12 +48,10 @@ class App(QWidget):
 			self._frame_count = img_array.shape[0]
 		# add text for frame number, non editable
 		print("Initializing image")
-		self.label = QLabel(self)
 		self.image = mImage(self._frame_count, self.loader)
+		pmap = self.image.getImg(0)
+		self.label = ImageLabel(pmap, self)
 		print(self.loader.shape, "Lshape")
-		print("Image initialized")
-		print("Setting pixmap")
-		self.label.setPixmap(self.image.getImg(0))
 		print("Finished pixmap")
 		
 		
@@ -61,15 +59,16 @@ class App(QWidget):
 			self.image.getImg(self._frame_index)
 		self.panLen = self.image.img.width() / 5
 
-		self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
-		self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
+		
 
 		# set grid layout, and assign widgets to app attributes
 		self.mode.layout.getLayoutItems(self)
 		
 		self.setLayout(self.layout)
-		
 
+
+		# self.pixelSize0 = self.image.loaded_shape[0] / self.image.img.height()
+		# self.pixelSize1 = self.image.loaded_shape[1] / self.image.img.width()
 		
 
 		self.dragging = False
@@ -81,6 +80,15 @@ class App(QWidget):
 
 		self.show()
 
+	@property 
+	def pixelSize0(self):
+		image_rect = self.label.rect()
+		return self.image.loaded_shape[0] / image_rect.height()
+
+	@property
+	def pixelSize1(self):
+		image_rect = self.label.rect()
+		return self.image.loaded_shape[1] / image_rect.width()
 
 	def _update_frame(self):
 		# self.image.setImg(self._frame_index)
@@ -88,8 +96,11 @@ class App(QWidget):
 		self._update_image()
 
 	def _update_image(self):
-		pmap = self.image.getImg(self._frame_index, self.show_annotations)
-		self.label.setPixmap(pmap)
+		# pmap = self.image.getImg(self._frame_index, self.show_annotations)
+		# pmap = self.label.pixmap()
+		# self.label.setPixmap(pmap)
+		self.label.update()
+		#pass
 
 	def keyPressEvent(self, event):
 		return self.EH.keyPressEvent(event)

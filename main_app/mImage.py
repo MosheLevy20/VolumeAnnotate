@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import Qt
 from .helpers import adjust_color
 class mImage(object):
 	def __init__(self, frame_count, img_loader, display_size=800):
@@ -46,12 +47,22 @@ class mImage(object):
 		self.scale = 1
 		self.offset = np.array([0.0,0.0])
 
-	def zoom(self, factor):
+	def zoom(self, factor,app):
 		self.scale *= factor
-		if self.scale < 0.01:
-			self.scale = 0.01
-		if self.scale > 1:
-			self.scale = 1
+		# if self.scale < 0.01:
+		# 	self.scale = 0.01
+		# if self.scale > 1:
+		# 	self.scale = 1
+		# old_pixmap = app.image.getImg(app._frame_index)
+
+		# # Scale the original pixmap and set it on the label
+		# new_pixmap = app.label.original_pixmap.scaled(int(factor * old_pixmap.width()), int(factor * old_pixmap.height()), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+		# app.label.setPixmap(new_pixmap)
+
+		# Update the scroll area
+		#app.imContainer.update()
+		app._update_image()
+
 
 	def pan(self, doffset):
 		x0 = int(self.offset[0])

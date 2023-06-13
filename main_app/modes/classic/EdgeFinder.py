@@ -30,7 +30,8 @@ def find_and_discard_small_edges(image, min_edge_length=100):
 	return result_image
 
 
-def findEdges(initialEdge, imageIndices, radius, loader):
+def findEdges(initialEdge, imageIndices, loader):
+	radius = 10
 	# Initialize the list of edge points with the initial edge
 	allEdges = [initialEdge]
 

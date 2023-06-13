@@ -19,17 +19,17 @@ def addItems(app):
     app.button_frame_change = QPushButton("Go to Frame", app)
     app.button_frame_change.clicked.connect(app.EH.on_frame_change)
 
-    app.button_zoom_in = QPushButton("Zoom In (\u2191)", app)
+    app.button_zoom_in = QPushButton("Zoom In (I)", app)
     app.button_zoom_in.clicked.connect(app.EH.on_zoom_in)
 
-    app.button_zoom_out = QPushButton("Zoom Out (\u2193)", app)
+    app.button_zoom_out = QPushButton("Zoom Out (O)", app)
     app.button_zoom_out.clicked.connect(app.EH.on_zoom_out)
 
-    app.button_next_frame = QPushButton("Next Frame (\u2192)", app)
+    app.button_next_frame = QPushButton("Next Frame (K)", app)
     # app.button_next_frame.clicked.connect(on_next_frame)
     app.button_next_frame.clicked.connect(app.EH.on_next_frame)
 
-    app.button_previous_frame = QPushButton("Previous Frame (\u2190)", app)
+    app.button_previous_frame = QPushButton("Previous Frame (J)", app)
     app.button_previous_frame.clicked.connect(app.EH.on_previous_frame)
 
     # copy previous frame annotations
@@ -185,21 +185,21 @@ def addItems(app):
     app.unwrapStyle = "Annotate"
 
     # create dropdown menu for annotation color using a QComboBox
-    app.annotationColorMenu = QComboBox(app)
+    # app.annotationColorMenu = QComboBox(app)
 
-    # add options to the dropdown menu [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
-    app.annotationColorMenu.addItem("Red", QColor(255, 0, 0))
-    app.annotationColorMenu.addItem("Green", QColor(0, 255, 0))
-    app.annotationColorMenu.addItem("Blue", QColor(0, 0, 255))
-    app.annotationColorMenu.addItem("Yellow", QColor(255, 255, 0))
-    app.annotationColorMenu.addItem("Magenta", QColor(255, 0, 255))
-    app.annotationColorMenu.addItem("Cyan", QColor(0, 255, 255))
-    app.annotationColorMenu.currentIndexChanged[int].connect(
-        app.EH.on_annotation_color_change
-    )
-    app.annotationColorIdx = 1
-    # set initial color to green
-    app.annotationColorMenu.setCurrentIndex(1)
+    # # add options to the dropdown menu [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
+    # app.annotationColorMenu.addItem("Red", QColor(255, 0, 0))
+    # app.annotationColorMenu.addItem("Green", QColor(0, 255, 0))
+    # app.annotationColorMenu.addItem("Blue", QColor(0, 0, 255))
+    # app.annotationColorMenu.addItem("Yellow", QColor(255, 255, 0))
+    # app.annotationColorMenu.addItem("Magenta", QColor(255, 0, 255))
+    # app.annotationColorMenu.addItem("Cyan", QColor(0, 255, 255))
+    # app.annotationColorMenu.currentIndexChanged[int].connect(
+    #     app.EH.on_annotation_color_change
+    # )
+    # app.annotationColorIdx = 1
+    # # set initial color to green
+    # app.annotationColorMenu.setCurrentIndex(1)
 
 
     app.frame_number = QLabel(app)
@@ -215,61 +215,95 @@ def addItems(app):
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 
 def createLayout(app):
+    scroll = QScrollArea()
+    scroll.setWidget(app.label)
+    scroll.setWidgetResizable(True)
     # Create main layout
     main_layout = QHBoxLayout()
 
     # Create control layout
-    control_layout = QVBoxLayout()
-    image_layout = QVBoxLayout()
+    control_widget1 = QWidget()
+    control_layout1 = QVBoxLayout(control_widget1)
+    control_widget2 = QWidget()
+    control_layout2 = QVBoxLayout(control_widget2)
+    #make the control layouts default to everthing going to the top
+    control_layout1.setAlignment(Qt.AlignTop)
+    control_layout2.setAlignment(Qt.AlignTop)
+    #image_layout = QVBoxLayout()
 
     # Add widgets to control layout
-    control_layout.addWidget(app.button_zoom_in)
-    control_layout.addWidget(app.button_zoom_out)
-    control_layout.addWidget(app.button_next_frame)
-    control_layout.addWidget(app.button_previous_frame)
+    control_layout1.addWidget(app.button_zoom_in)
+    control_layout2.addWidget(app.button_zoom_out)
+    control_layout1.addWidget(app.button_next_frame)
+    control_layout2.addWidget(app.button_previous_frame)
 
     #control_layout.addWidget(app.label)
-    # control_layout.addWidget(app.frame_number)
-    # control_layout.addWidget(app.frame_edit_display)
-    # control_layout.addWidget(app.button_frame_change)
+    control_layout1.addWidget(app.frame_number)
+    control_layout2.addWidget(QLabel("Go To Number:"))
+    control_layout2.addWidget(app.frame_edit_display)
+    control_layout1.addWidget(app.button_frame_change)
 
-    # control_layout.addWidget(app.mouseModeWidget)
-    # control_layout.addWidget(app.button_show_annotations)
-    # control_layout.addWidget(app.annotationColorMenu)
-    # control_layout.addWidget(app.slider_annotation_radius)
+    control_layout1.addWidget(app.mouseModeWidget)
+    control_layout2.addWidget(app.button_show_annotations)
+    #control_layout2.addWidget(app.annotationColorMenu)
+    control_layout2.addWidget(QLabel("Annotation Radius:"))
+    control_layout2.addWidget(app.slider_annotation_radius)
 
-    # control_layout.addWidget(app.slider_shadows)
-    # control_layout.addWidget(app.slider_midtones)
-    # control_layout.addWidget(app.slider_highlights)
+    control_layout1.addWidget(QLabel("Shadows"))
+    control_layout1.addWidget(app.slider_shadows)
+    control_layout1.addWidget(QLabel("Midtones"))
+    control_layout1.addWidget(app.slider_midtones)
+    control_layout1.addWidget(QLabel("Highlights"))
+    control_layout1.addWidget(app.slider_highlights)
+    control_layout2.addWidget(app.button_copy)
+    # control_layout2.addStretch(1)
+    
+    
+    
+    # control_layout2.addStretch(3)
+    control_layout1.addWidget(app.button_invert)
+    
+    control_layout1.addWidget(QLabel("Edge Detection Num. Frames"))
+    control_layout1.addWidget(app.slider_edge)
+    control_layout1.addWidget(app.button_edge)
 
-    # control_layout.addWidget(app.button_invert)
-    # control_layout.addWidget(app.button_copy)
-
-    # control_layout.addWidget(app.slider_edge)
-    # control_layout.addWidget(app.button_edge)
-
-    # control_layout.addWidget(app.button_export_obj)
-    # control_layout.addWidget(app.button_export_volpkg)
-    # control_layout.addWidget(app.button_save)
-    # control_layout.addWidget(app.button_load)
-
-    # control_layout.addWidget(app.unwrapStyleWidget)
-    # control_layout.addWidget(app.button_save_2D)
+    control_layout2.addWidget(app.button_export_obj)
+    control_layout2.addWidget(app.button_export_volpkg)
+    control_layout2.addWidget(app.button_save)
+    control_layout2.addWidget(app.button_load)
+    # control_layout2.addStretch(2)
+    control_layout2.addWidget(app.unwrapStyleWidget)
+    control_layout2.addWidget(app.button_save_2D)
 
     app.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-    for i in range(control_layout.count()):
-        widget = control_layout.itemAt(i).widget()
+    for i in range(control_layout1.count()):
+        widget = control_layout1.itemAt(i).widget()
         if widget is not None:  # Skip layout spacers
             widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    for i in range(control_layout2.count()):
+        widget = control_layout2.itemAt(i).widget()
+        if widget is not None:
+            widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     # Add image to image layout
-    image_layout.addWidget(app.label)
+    #image_layout.addWidget(app.label)
+    control_widget = QWidget()
+    control_layout = QHBoxLayout(control_widget)
+    control_layout.addWidget(control_widget1)
+    control_layout.addWidget(control_widget2)
+
+    splitter = QSplitter(Qt.Horizontal)
+    splitter.addWidget(scroll)
+    splitter.addWidget(control_widget)
+    main_layout.addWidget(splitter)
     # Add image layout to main layout
-    main_layout.addLayout(image_layout)
+    #main_layout.addLayout(image_layout)
     # Add control layout to main layout
-    main_layout.addLayout(control_layout)
+    #main_layout.addLayout(control_layout)
 
     
 
     # Set layout
     app.layout = main_layout
+
+    app.imContainer = scroll

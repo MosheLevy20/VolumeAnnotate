@@ -143,7 +143,6 @@ class EventHandler(EventHandlerBase):
 		edges = findEdges(
 			currentEdge,
 			imageIndices,
-			self.app.inkRadius,
 			self.app.loader 
 		)
 
@@ -195,7 +194,7 @@ class EventHandler(EventHandlerBase):
 			# Call the parent class's handle_call method
 			super().mousePressEvent(event)
 		except NotImplementedError:
-			x, y = getRelCoords(self.app, event.pos())
+			x, y = getRelCoords(self.app, event.globalPos())
 			# check if the mouse is out of the image
 			xf, yf = getImFrameCoords(self.app, event.pos())
 			if xf < 0 or yf < 0 or xf > 1 or yf > 1:

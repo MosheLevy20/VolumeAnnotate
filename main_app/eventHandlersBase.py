@@ -14,11 +14,11 @@ class EventHandlerBase(object):
 		self.app._update_frame()
 
 	def on_zoom_in(self, event):
-		self.app.image.zoom(1 / 1.1)
+		self.app.image.zoom(1 / 1.1,self.app)
 		self.app._update_image()
 
 	def on_zoom_out(self, event):
-		self.app.image.zoom(1.1)
+		self.app.image.zoom(1.1, self.app)
 		self.app._update_image()
 
 	def on_next_frame(self, event):
@@ -52,23 +52,23 @@ class EventHandlerBase(object):
 
 	def keyPressEvent(self, event):
 		#print(event.key())
-		if event.key() == Qt.Key_Right:
+		if event.key() == Qt.Key_K:
 			self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
 			self.app._update_frame()
 			return
-		elif event.key() == Qt.Key_Left:
+		elif event.key() == Qt.Key_J:
 			self.app._frame_index = max(self.app._frame_index - 1, 0)
 			self.app._update_frame()
 			return
-		elif event.key() == Qt.Key_Up:
+		elif event.key() == Qt.Key_I:
 			if self.app.image.scale < 0.01:
 				return
-			self.app.image.zoom(1 / 1.1)
+			self.app.image.zoom(1 / 1.1, self.app)
 			self.app._update_image()
-		elif event.key() == Qt.Key_Down:
+		elif event.key() == Qt.Key_O:
 			if self.app.image.scale > 10:
 				return
-			self.app.image.zoom(1.1)
+			self.app.image.zoom(1.1, self.app)
 			self.app._update_image()
 		# wasd for panning
 		elif event.key() == Qt.Key_A:
