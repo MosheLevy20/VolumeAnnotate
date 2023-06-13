@@ -52,12 +52,28 @@ class EventHandlerBase(object):
 
 	def keyPressEvent(self, event):
 		#print(event.key())
-		if event.key() == Qt.Key_K:
+		if event.key() == Qt.Key_2:
 			self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
 			self.app._update_frame()
 			return
-		elif event.key() == Qt.Key_J:
+		elif event.key() == Qt.Key_1:
 			self.app._frame_index = max(self.app._frame_index - 1, 0)
+			self.app._update_frame()
+			return
+		elif event.key() == Qt.Key_4:
+			self.app._frame_index = min(self.app._frame_index + 10, self.app._frame_count - 10)
+			self.app._update_frame()
+			return
+		elif event.key() == Qt.Key_3:
+			self.app._frame_index = max(self.app._frame_index - 10, 0)
+			self.app._update_frame()
+			return
+		elif event.key() == Qt.Key_6:
+			self.app._frame_index = min(self.app._frame_index + 100, self.app._frame_count - 10)
+			self.app._update_frame()
+			return
+		elif event.key() == Qt.Key_5:
+			self.app._frame_index = max(self.app._frame_index - 100, 0)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_I:
