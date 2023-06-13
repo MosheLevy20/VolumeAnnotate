@@ -177,7 +177,7 @@ def getRelCoords(app, pos):
 	offset = copy.deepcopy(app.image.offset)
 	offset[0] /= app.pixelSize0/app.image.scale
 	offset[1] /= app.pixelSize1/app.image.scale
-	print(offset)
+	#print(offset)
 	# Get the size of the image
 	image_size = app.label.size()
 	image_rect = app.label.pixmap().rect()
