@@ -126,7 +126,7 @@ class RemoteZarr:
 		if len(toDownload) > 0:
 			self._download_file(toDownload)
 		
-		store, tiffs, indices = load_tif(self.path, filesNeeded, returnFormat=1)
+		store, tiffs, indices = load_tif2(self.path, filesNeeded, returnFormat=1)
 		self.store = store
 		#find min of offsets in all dimensions
 		#print(offsets)
@@ -190,9 +190,41 @@ class RemoteZarr:
 
 
 		
+def load_tif(path):
+	"""This function will take a path to a folder that contains a stack of .tif
+	files and returns a concatenated 3D zarr array that will allow access to an
+	arbitrary region of the stack.
+
+	We support two different styles of .tif stacks.  The first are simply
+	numbered filenames, e.g., 00.tif, 01.tif, 02.tif, etc.  In this case, the
+	numbers are taken as the index into the zstack, and we assume that the zslices
+	are fully continuous.
+
+	The second follows @spelufo's reprocessing, and are not 2D images but 3D cells
+	of the data.  These should be labeled
+
+	cell_yxz_YINDEX_XINDEX_ZINDEX
+
+	where these provide the position in the Y, X, and Z grid of cuboids that make
+	up the image data.
+	"""
+	# Get a list of .tif files
+	tiffs = [filename for filename in os.listdir(path) if filename.endswith(".tif")]
+	if all([filename[:-4].isnumeric() for filename in tiffs]):
+		# This looks like a set of z-level images
+		tiffs.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+		paths = [os.path.join(path, filename) for filename in tiffs]
+		store = tifffile.imread(paths, aszarr=True)
+	elif all([filename.startswith("cell_yxz_") for filename in tiffs]):
+		# This looks like a set of cell cuboid images
+		images = tifffile.TiffSequence(os.path.join(path, "*.tif"), pattern=r"cell_yxz_(\d+)_(\d+)_(\d+)")
+		store = images.aszarr(axestiled={0: 1, 1: 2, 2: 0})
+	stack_array = zarr.open(store, mode="r")
+	return stack_array, tiffs
 
 
-def load_tif(path, tiffs, returnFormat=0):
+
+def load_tif2(path, tiffs, returnFormat=0):
 	"""This function will take a path to a folder that contains a stack of .tif
 	files and returns a concatenated 3D zarr array that will allow access to an
 	arbitrary region of the stack.
@@ -235,62 +267,7 @@ def load_tif(path, tiffs, returnFormat=0):
 		tiffs = [os.path.basename(tiff) for tiff in tiffs]
 		return stack_array, tiffs, indices
 
-# def load_zarr(flist):
-# 	# Use a defaultdict to store 2D arrays by their Z values
-# 	groups = defaultdict(list)
 
-# 	# Parse the filenames to get the indices and group by Z value
-# 	for fname in flist:
-# 		x, y, z = map(int, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])
-# 		img = tifffile.imread(fname)
-# 		groups[z].append((x, y, img, fname))
-
-
-# 	# For each Z value, assemble the 2D image
-
-# 	imgs_2d = []
-# 	max_rows = max_cols = 0
-# 	for z in sorted(groups.keys()):
-# 		# Get list of (x, y, img) tuples and sort by x (col) and then y (row) values
-# 		imgs = sorted(groups[z], key=lambda tup: (tup[0], tup[1]))
-# 		print(f"imgs: {[img[3] for img in imgs]}")
-
-# 		# Use np.hstack and np.vstack to assemble 2D image
-# 		cols = []
-# 		while imgs:
-# 			# Collect all the images with the same x index
-# 			current_x = imgs[0][0]
-# 			same_col_imgs = [img for img in imgs if img[0] == current_x]
-			
-# 			# Remove the collected images from imgs list
-# 			imgs = [img for img in imgs if img[0] != current_x]
-			
-# 			# Extract only the image data and vertically stack
-# 			col = np.vstack([img[2] for img in same_col_imgs])
-# 			cols.append(col)
-
-# 		# Horizontally stack all the columns to form the 2D image
-# 		img_2d = np.hstack(cols)
-# 		max_rows = max(max_rows, img_2d.shape[0])
-# 		max_cols = max(max_cols, img_2d.shape[1])
-# 		imgs_2d.append(img_2d)
-
-
-
-# 	# Pad the 2D images to have the same dimensions and stack to create 3D array
-# 	padded_imgs = [np.pad(img, ((0, max_rows - img.shape[0]), (0, max_cols - img.shape[1]))) for img in imgs_2d]
-# 	stack_array = np.dstack(padded_imgs)
-
-# 	# Convert to Zarr array
-# 	zarr_array = zarr.array(stack_array, chunks=True)
-
-# 	# an ordered list of file names 
-# 	tiffs = sorted(flist)
-
-# 	# a corresponding list of indices
-# 	indices = [tuple(map(lambda x: int(x) - 1, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])) for fname in tiffs]
-
-# 	return zarr_array, tiffs, indices
 def load_zarr(flist):
 	groups = defaultdict(list)
 	for fname in flist:

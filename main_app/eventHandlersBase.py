@@ -53,7 +53,7 @@ class EventHandlerBase(object):
 	def keyPressEvent(self, event):
 		#print(event.key())
 		f = 1
-		if self.app.image.scale > self.app.image.zoom_threshold:
+		if self.app.image.scale > self.app.image.zoom_threshold and self.app.STREAM:
 			f = 10
 		if event.key() == Qt.Key_2:
 			self.app._frame_index = min(self.app._frame_index + 1*f, self.app._frame_count - 10)

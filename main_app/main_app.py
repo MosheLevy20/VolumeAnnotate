@@ -104,6 +104,7 @@ class App(QWidget):
 		self.draggingOffset = None
 		self.panning = False
 		self.clickState = 0
+		self.STREAM = STREAM
 
 		self.show()
 
