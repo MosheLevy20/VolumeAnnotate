@@ -37,11 +37,11 @@ def addItems(app):
     app.button_zoom_out = QPushButton("Zoom Out (O)", app)
     app.button_zoom_out.clicked.connect(app.EH.on_zoom_out)
 
-    app.button_next_frame = QPushButton("Next Frame (K)", app)
+    app.button_next_frame = QPushButton("Frame +10", app)
     # app.button_next_frame.clicked.connect(on_next_frame)
     app.button_next_frame.clicked.connect(app.EH.on_next_frame)
 
-    app.button_previous_frame = QPushButton("Previous Frame (J)", app)
+    app.button_previous_frame = QPushButton("Frame -10", app)
     app.button_previous_frame.clicked.connect(app.EH.on_previous_frame)
 
     # copy previous frame annotations

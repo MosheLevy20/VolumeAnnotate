@@ -11,177 +11,26 @@ import copy
 
 from collections import defaultdict
 import re
+from typing import List, Tuple
 
-# class RemoteZarr:
-# 	def __init__(self, url, username, password, path, max_storage_gb=10, chunk_type="zstack"):
-# 		self.url = url
-# 		self.username = username
-# 		self.password = password
-# 		self.path = path
-# 		file_list = np.array(list_files(url, username, password))
-# 		if chunk_type == "zstack":
-# 			self.file_list = tifffile.TiffSequence(file_list, pattern=r"(\d+).tif")
-# 		else:
-# 			self.file_list = tifffile.TiffSequence(file_list, pattern=r"cell_yxz_(\d+)_(\d+)_(\d+)")
-		
-# 		self.shape0 = self.file_list.shape
-
-# 		self.file_indices = self.file_list.indices
-# 		self.file_list = np.array(self.file_list.files)
-# 		self.indexFileDict = {index:filename for index, filename in zip(self.file_indices, self.file_list)}
-# 		self.downloaded = {}
-# 		self.filesNeeded = [os.path.join(self.path, filename) for filename in self.file_list[:1]]
-
-# 		self.chunk_type = chunk_type
-
-# 		self.max_storage_gb = max_storage_gb
-# 		#download first file to get shape and dtype
-# 		self._download_file([self.file_list[0]])
-# 		f = tifffile.imread(os.path.join(self.path, self.file_list[0]))
-# 		self.fileshape = f.shape
-# 		if chunk_type == "cuboid":
-# 			self.fileshape = np.array([1, self.fileshape[0], self.fileshape[1]])
-# 		self.filesize = f.nbytes
-# 		self.dtype = f.dtype
-# 		if chunk_type == "zstack":
-# 			self.shape = np.array([self.shape0[0],self.fileshape[1], self.fileshape[0]])
-# 		else:
-# 			self.shape = np.array(self.fileshape)*np.array([self.shape0[2], self.shape0[0], self.shape0[1]])
-# 		self.maxfiles = int(self.max_storage_gb*1e9/self.filesize)
-
-# 		self.store = None
-
-# 		self._shape = None #current shape of store
-
-# 		self.chunks = None
-
-# 		#self.bounds = [0,0,0,0,0,0] #zstart, zstop, ystart, ystop, xstart, xstop
-# 		self.offset = [0,0,0] #z, y, x
-
-# 		tiffs = [filename for filename in os.listdir(self.path) if filename.endswith(".tif")]
-# 		if len(tiffs) > 0:
-# 			self.update_store()
-# 		else:
-# 			firstSlice = self[0:1,:,:]
-
-
-# 	def update_store(self, currfileindex=None):
-# 		'''
-# 		delete files if necessary (outside bounds)
-# 		update store with new files
-# 		and recomputes offset and bounds
-# 		'''
-# 		store, tiffs, indices = load_tif(self.path, self.filesNeeded, returnFormat=1)
-# 		if self.chunks is None:
-# 			self.chunks = store._chunks
-
-# 		if len(tiffs) > self.maxfiles:
-# 			#delete files ordered by use time
-# 			#delete files until we are below maxfiles
-# 			tiffsByTime = sorted(tiffs, key=lambda f: os.path.getatime(os.path.join(self.path, f)))
-# 			#reverse list so we delete oldest first
-# 			tiffsByTime.reverse()
-# 			filesToDelete = tiffsByTime[self.maxfiles:] 
-# 			if currfileindex is not None:
-# 				for f in filesToDelete:
-# 					if f in currfileindex:
-# 						continue
-# 					os.remove(os.path.join(self.path, f))
-# 			store, tiffs, indices = load_tif(self.path, self.filesNeeded, returnFormat=1)
-# 			if len(tiffs) > self.maxfiles:
-# 				raise Exception("Not enough storage allocated for this dataset")
-		
-# 		#update offset
-# 		if self.chunk_type == "zstack":
-# 			self.offset = [indices[0]]
-# 		else:
-# 			self.offset = [self.fileshape[0]*indices[0][0], self.fileshape[1]*indices[0][1], self.fileshape[2]*indices[0][2]]
-# 			print(f"offset in update_store: {self.offset}")
-# 			print(f"indices: {indices}")
-
-
-			
-
-# 		#downloaded is tiff:index pairs
-# 		self.downloaded = {tiff:i for tiff,i in zip(tiffs, indices)}
-# 		self.store = store
-# 		self._shape = self.store._shape
-# 		#get offset and curr pos
+def genOffsets(offsets: List[Tuple[int, int, int]], extents: List[int]) -> List[Tuple[int, int, int]]:
+	# Compute mean of offsets
+	mx, my, mz = map(lambda x: sum(x) / len(x), zip(*offsets))
 	
-# 	def _get_store_index(self, og_key):
-# 		'''
-# 		subtracts offset from all elements of key
-# 		then checks if key is in store (i.e. in downloaded list)
-# 		if not, downloads required files and updates store
-# 		returns key with offset subtracted
-# 		'''
-		
-# 		key = self.shiftedKey(og_key)
+	# Create a list to store the offsets within extents
+	results = []
 
-# 		#check if key is in store
-# 		toDownload = []
-# 		filesNeeded, indices = self.filesFromKey(key)
-# 		self.filesNeeded = [os.path.join(self.path, i.split("/")[-1]) for i in filesNeeded]
+	# Go through all possible offsets within extents from the mean
+	for I in range(int(mx - extents[0]), int(mx + extents[1] + 1)):
+		for J in range(int(my - extents[2]), int(my + extents[3] + 1)):
+			for K in range(int(mz - extents[4]), int(mz + extents[5] + 1)):
+				# Add to the result if it is within extents from the mean
+				results.append((I, J, K))
+	
+	# Sort by Manhattan distance from the mean
+	results.sort(key=lambda x: abs(x[0] - mx) + abs(x[1] - my) + abs(x[2] - mz))
 
-# 		for f in filesNeeded:
-# 			if f not in self.downloaded.keys():
-# 				toDownload.append(f)
-# 		if len(toDownload) > 0:
-# 			self._download_file(toDownload)
-# 			self.update_store(filesNeeded)
-# 			key = self.shiftedKey(og_key)
-			
-# 		return key
-				
-# 	def shiftedKey(self, key):
-# 		shifted = [[i.start, i.stop] for i in key]
-# 		for index, i in enumerate(shifted):
-# 			if i[0] is None or i[1] is None or (self.chunk_type == "zstack" and index>0):
-# 				continue
-# 			shifted[index][0] = i[0] - self.offset[index]
-# 			shifted[index][1] = i[1] - self.offset[index]
-# 		return np.array([slice(*i) for i in shifted])
-
-# 	def filesFromKey(self, key):#TODO
-# 		'''
-# 		converts key into list of files
-# 		'''
-# 		if self.chunk_type == "cuboid":
-# 			normed = [[i.start, i.stop] for i in key]
-# 			for index, i in enumerate(normed):
-# 				if i[0] is None or i[1] is None:
-# 					continue
-# 				if index == 0:
-# 					continue
-# 				normed[index][0] = i[0]//self.fileshape[index]
-# 				normed[index][1] = i[1]//self.fileshape[index]
-# 			#get array of indices from slice
-# 			indices = indices_from_slice([slice(*i) for i in normed])
-# 		else:
-
-# 			indices = [(i*10,) for i in range(key[0].start, key[0].stop)]
-
-# 		#convert indices to filenames by using file_indices
-# 		files = [self.indexFileDict[index] for index in indices]
-# 		return files, indices
-		
-
-# 	def __getitem__(self, key):
-# 		print(f"initial key: {key}")
-# 		key = self._get_store_index(key)
-# 		print(f"final key: {key}")
-# 		data = self.store[*key]
-# 		print(f"shape: {data.shape}")
-# 		print(f"store shape: {self.store.shape}")
-# 		return data
-
-# 	def _download_file(self, filename):
-# 		download_file(self.url, filename, self.username, self.password, self.path)
-
-					
-import numpy as np
-import tifffile
-import os
+	return results
 
 class RemoteZarr:
 	def __init__(self, url, username, password, path, max_storage_gb=10, chunk_type="zstack"):
@@ -256,13 +105,16 @@ class RemoteZarr:
 						kp = str(k+1).zfill(3)
 						fname = f"cell_yxz_{jp}_{kp}_{ip}.tif"
 						filesNeeded.append(fname)
-						offsets.append([i,j, k])
+						offsets.append([i, j, k])
 		else:
 			for i in range(keyArr[0][0], keyArr[0][1]+1):
-				ip = str(i*10).zfill(5)
+				ip = str((i//10)*10).zfill(5)
 				fname = f"{ip}.tif"
 				filesNeeded.append(fname)
 				offsets.append(i)
+		# if self.chunk_type == "cuboid":
+		# 	self.downloadThreaded(offsets)
+
 		localFiles = [os.path.join(self.path, i) for i in filesNeeded]
 
 		#check if files exist
@@ -293,7 +145,25 @@ class RemoteZarr:
 		return shifted_key
 
 
+	def downloadThreaded(self, offsets):
+		print("downloading threaded")
+		offsets = genOffsets(offsets, [5,100,4,4,4,4])
+		filesNeeded = []
+		for i,j,k in offsets:
+			ip = str(i+1).zfill(5)
+			jp = str(j+1).zfill(3)
+			kp = str(k+1).zfill(3)
+			fname = f"cell_yxz_{jp}_{kp}_{ip}.tif"
+			#check if file in 
+			if fname not in self.file_list:
+				continue
+			if os.path.exists(os.path.join(self.path, fname)):
+				continue
 
+			filesNeeded.append(fname)
+		#use threaded download
+		if len(filesNeeded) > 0:
+			self._download_file(filesNeeded, False)
 
 
 
@@ -311,8 +181,8 @@ class RemoteZarr:
 			data = data[::-1]
 		return data
 
-	def _download_file(self, filename):
-		download_file(self.url, filename, self.username, self.password, self.path)
+	def _download_file(self, filename, wait=True):
+		threaded_download(self.url, filename, self.username, self.password, self.path, wait=wait)
 
 					
 
@@ -422,31 +292,31 @@ def load_tif(path, tiffs, returnFormat=0):
 
 # 	return zarr_array, tiffs, indices
 def load_zarr(flist):
-    groups = defaultdict(list)
-    for fname in flist:
-        y, x, z = map(int, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])
-        img = tifffile.imread(fname)
-        groups[z].append((x, y, img, fname))
+	groups = defaultdict(list)
+	for fname in flist:
+		y, x, z = map(int, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])
+		img = tifffile.imread(fname)
+		groups[z].append((x, y, img, fname))
 
-    imgs_2d = []
-    for z in sorted(groups.keys()):
-        imgs = sorted(groups[z], key=lambda tup: (tup[0], tup[1]))
-        cols = defaultdict(list)  # changed 'rows' to 'cols' here
-        for x, y, img, _ in imgs:
-            cols[x].append(img)  # changed 'rows' to 'cols' here
+	imgs_2d = []
+	for z in sorted(groups.keys()):
+		imgs = sorted(groups[z], key=lambda tup: (tup[0], tup[1]))
+		cols = defaultdict(list)  # changed 'rows' to 'cols' here
+		for x, y, img, _ in imgs:
+			cols[x].append(img)  # changed 'rows' to 'cols' here
 
-        for x in sorted(cols.keys()):
-            cols[x] = np.concatenate(cols[x], axis=0)  # concatenate along y-axis
-        
-        img_2d = np.concatenate(list(cols.values()), axis=1)  # concatenate along x-axis
-        imgs_2d.append(img_2d)
+		for x in sorted(cols.keys()):
+			cols[x] = np.concatenate(cols[x], axis=0)  # concatenate along y-axis
+		
+		img_2d = np.concatenate(list(cols.values()), axis=1)  # concatenate along x-axis
+		imgs_2d.append(img_2d)
 
-    stack_array = np.stack(imgs_2d, axis=2)
-    zarr_array = zarr.array(stack_array, chunks=True)
-    tiffs = sorted(flist)
-    indices = [tuple(map(lambda x: int(x) - 1, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])) for fname in tiffs]
+	stack_array = np.stack(imgs_2d, axis=2)
+	zarr_array = zarr.array(stack_array, chunks=True)
+	tiffs = sorted(flist)
+	indices = [tuple(map(lambda x: int(x) - 1, re.findall(r"cell_yxz_(\d+)_(\d+)_(\d+)", fname)[0])) for fname in tiffs]
 
-    return zarr_array, tiffs, indices
+	return zarr_array, tiffs, indices
 
 
 
@@ -617,10 +487,14 @@ class Loader:
 			zslice = pad_slice(zslice, self.shape[0])
 		elif self.chunk_type == "cuboid":
 			# First pad in Z by 5 in each direction if we have space, then in XY
+			if self.STREAM:
+				zpad = 1
+			else:
+				zpad = 2
 			zslice = pad_slice(
 				zslice, 
 				self.shape[0], 
-				int_add=min(5, self.max_mem_gb // (2 * est_size))
+				int_add=min(zpad, self.max_mem_gb // (2 * est_size))
 			)
 			est_size = self.estimate_slice_size(zslice, xslice, yslice)
 			if (3 * est_size) >= self.max_mem_gb:
@@ -680,25 +554,54 @@ def hashable_to_slice(item):
 
 
 
+import requests
+from threading import Thread
 
+def download_file(url, filename, username, password, path):
+	# Get the file with the provided username and password
+	response = requests.get(url, auth=(username, password))
 
+	# Check if the request was successful
+	if response.status_code == 200:
+		# Write the contents of the response to a file in the specified path
+		with open(f'{path}/{filename}', 'wb') as file:
+			file.write(response.content)
+	else:
+		print(f'Failed to download {filename}. Status code: {response.status_code}')
 
-def download_file(url, filenames, username, password, download_dir="."):
-	# Send a request with basic authentication
-	for filename in filenames:
-		response = requests.get(url+filename, auth=(username, password), stream=True)
+from concurrent.futures import ThreadPoolExecutor
+def threaded_download(url, files_needed, username, password, path, wait=True, max_workers=10):
+	# Create a ThreadPoolExecutor
+	with ThreadPoolExecutor(max_workers=max_workers) as executor:
+		# Start a new thread for each file download
+		for file in files_needed:
+			# Form the file's url
+			file_url = f'{url}/{file}'
 		
-		# Check if the request was successful
-		if response.status_code == 200:
-			# Save the content to a file
-			f_1 = filename.split("/")[-1]
-			# if f_1.startswith("cell"):
-			# 	filename = fixfname(filename)
-			with open(f"{download_dir}/{filename}", "wb") as f:
-				for chunk in response.iter_content(chunk_size=8192):
-					f.write(chunk)
-		else:
-			print(f"Failed to download {url+filename}")
+			# Submit a new task to download the file
+			executor.submit(download_file, file_url, file, username, password, path)
+
+		# If the wait parameter is True, then shutdown() will wait until all tasks are done
+		if wait:
+			executor.shutdown(wait=wait)
+
+	print("Donish")
+# def download_file(url, filenames, username, password, download_dir="."):
+# 	# Send a request with basic authentication
+# 	for filename in filenames:
+# 		response = requests.get(url+filename, auth=(username, password), stream=True)
+		
+# 		# Check if the request was successful
+# 		if response.status_code == 200:
+# 			# Save the content to a file
+# 			f_1 = filename.split("/")[-1]
+# 			# if f_1.startswith("cell"):
+# 			# 	filename = fixfname(filename)
+# 			with open(f"{download_dir}/{filename}", "wb") as f:
+# 				for chunk in response.iter_content(chunk_size=8192):
+# 					f.write(chunk)
+# 		else:
+# 			print(f"Failed to download {url+filename}")
 
 def list_files(url, username, password):
 	# Send a request with basic authentication
@@ -744,112 +647,6 @@ def indices_from_slice(slice_list):
 	return index_tuples
 
 
-
-
-# class Volpkg(object):
-# 	def __init__(self, folder, sessionId0):
-# 		if folder.endswith(".volpkg") or os.path.exists(folder+".volpkg"):
-# 			self.basepath = folder if folder.endswith(".volpkg") else folder+".volpkg"
-# 			#get all volumes in the folder
-# 			volumes = os.listdir(f"{self.basepath}/volumes")
-# 			#remove hidden files
-# 			volumes = [i for i in volumes if not i.startswith(".")]
-# 			volume = volumes[0] #should switch to a dialog to select volume
-# 			self.volume = volume
-# 			self.img_array, self.tifstack = load_tif(f"{self.basepath}/volumes/{volume}")
-# 			self.segmentations = None #TODO
-# 		else:
-# 			self.basepath = folder+".volpkg"
-# 			#make volpkg folder
-# 			os.mkdir(self.basepath)
-# 			self.img_array, self.tifstack = load_tif(folder)
-# 			#copy tifstack to volumes folder
-# 			os.mkdir(f"{self.basepath}/volumes")
-# 			#volume name
-# 			os.mkdir(f"{self.basepath}/volumes/{sessionId0}")
-# 			for i, tif in enumerate(self.tifstack):
-# 				#use cp command
-# 				os.system(f"cp {tif} {self.basepath}/volumes/{sessionId0}/{i}.tif")
-			
-# 			self.segmentations = None
-			
-# 	def saveVCPS(self, file_name, annotations, imshape, ordered=True, point_type='float', encoding='utf-8'):
-# 		annotations = self.stripAnnoatation(annotations, imshape)
-# 		#check if paths directory exists
-# 		if not os.path.exists(self.basepath+"/paths"):
-# 			os.mkdir(self.basepath+"/paths")
-# 		#check if file_name directory exists
-# 		if not os.path.exists(self.basepath+"/paths/"+file_name):
-# 			os.mkdir(self.basepath+"/paths/"+file_name)
-# 		file_path = f"{self.basepath}/paths/{file_name}/pointset.vcps"
-# 		height, width, dim = annotations.shape
-# 		header = {
-# 			'width': width,
-# 			'height': height,
-# 			'dim': dim,
-# 			'ordered': 'true' if ordered else 'false',
-# 			'type': point_type,
-# 			'version': '1'
-# 		}
-
-# 		with open(file_path, 'wb') as file:
-# 			# Write header
-# 			for key, value in header.items():
-# 				file.write(f"{key}: {value}\n".encode(encoding))
-# 			file.write("<>\n".encode(encoding))
-
-# 			# Write data
-# 			format_str = 'd' if point_type == 'double' else 'f'
-# 			for i in range(height):
-# 				for j in range(width):
-# 					point = annotations[i, j]
-# 					for value in point:
-# 						file.write(struct.pack(format_str, value))
-		
-# 		#write meta.json {"name":"20230426114804","type":"seg","uuid":"20230426114804","vcps":"pointset.vcps","volume":"20230210143520"}
-# 		meta = {
-# 			"name": file_name,
-# 			"type": "seg",
-# 			"uuid": file_name,
-# 			"vcps": "pointset.vcps",
-# 			"volume": self.volume
-# 		}
-# 		with open(f"{self.basepath}/paths/{file_name}/meta.json", 'w') as file:
-# 			json.dump(meta, file)
-
-
-# 	def stripAnnoatation(self, annotationsRaw, imshape):
-# 		interpolated = [i for i in annotationsRaw if len(i) > 0]
-
-# 		H = len(interpolated)
-# 		W = max([len(i) for i in interpolated])
-# 		im = np.zeros((H, W*2, 3), dtype=np.float64)
-# 		#replace all 0's with nan
-# 		im[im == 0] = np.nan
-
-# 		cy = H//2
-
-# 		Center = interpolated[cy][len(interpolated[cy])//2]
-# 		for i in range(len(interpolated)):
-# 			if len(interpolated[i]) > 0:
-# 				#find the center of the slice by finding the point with min distance from true center
-# 				center = interpolated[i][0]
-# 				centerIndex = 0
-# 				for jindex, j in enumerate(interpolated[i]):
-# 					if np.sqrt((j.x-Center.x)**2 + (j.y-Center.y)**2) < np.sqrt((center.x-Center.x)**2 + (center.y-Center.y)**2):
-# 						center = j
-# 						centerIndex = jindex
-# 				#populate the image with the interpolated to the left and right of the center
-				
-# 				for jindex, j in enumerate(interpolated[i]):
-
-# 					x,y = interpolated[i][jindex].x, interpolated[i][jindex].y
-# 					x *= imshape[0]
-# 					y *= imshape[1]
-			
-					
-# 					im[i, W - (centerIndex-jindex)] = [x,y,i]
-# 		return im
 
 def fixfname(f):
 	#remove .tif

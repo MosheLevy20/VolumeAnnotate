@@ -22,11 +22,11 @@ class EventHandlerBase(object):
 		self.app._update_image()
 
 	def on_next_frame(self, event):
-		self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
+		self.app._frame_index = min(self.app._frame_index + 10, self.app._frame_count - 10)
 		self.app._update_frame()
 
 	def on_previous_frame(self, event):
-		self.app._frame_index = max(self.app._frame_index - 1, 0)
+		self.app._frame_index = max(self.app._frame_index - 10, 0)
 		self.app._update_frame()
 
 
@@ -52,28 +52,31 @@ class EventHandlerBase(object):
 
 	def keyPressEvent(self, event):
 		#print(event.key())
+		f = 1
+		if self.app.image.scale > self.app.image.zoom_threshold:
+			f = 10
 		if event.key() == Qt.Key_2:
-			self.app._frame_index = min(self.app._frame_index + 1, self.app._frame_count - 10)
+			self.app._frame_index = min(self.app._frame_index + 1*f, self.app._frame_count - 10)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_1:
-			self.app._frame_index = max(self.app._frame_index - 1, 0)
+			self.app._frame_index = max(self.app._frame_index - 1*f, 0)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_4:
-			self.app._frame_index = min(self.app._frame_index + 10, self.app._frame_count - 10)
+			self.app._frame_index = min(self.app._frame_index + 10*f, self.app._frame_count - 10)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_3:
-			self.app._frame_index = max(self.app._frame_index - 10, 0)
+			self.app._frame_index = max(self.app._frame_index - 10*f, 0)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_6:
-			self.app._frame_index = min(self.app._frame_index + 100, self.app._frame_count - 10)
+			self.app._frame_index = min(self.app._frame_index + 100*f, self.app._frame_count - 10)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_5:
-			self.app._frame_index = max(self.app._frame_index - 100, 0)
+			self.app._frame_index = max(self.app._frame_index - 100*f, 0)
 			self.app._update_frame()
 			return
 		elif event.key() == Qt.Key_I:

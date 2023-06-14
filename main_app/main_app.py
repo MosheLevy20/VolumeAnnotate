@@ -20,9 +20,9 @@ class App(QWidget):
 		t0 = time.time()
 		self.loaderSmall = None
 		if STREAM:
-			urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/",
-			"scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
-			}
+			urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/"}
+			#"scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
+			#}
 			urlsSmall = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_small/20230205180739/"}
 			#			 "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_small/20230210143520/",}
 			# urlsCubes = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volume_grids/20230205180739/",
@@ -37,7 +37,8 @@ class App(QWidget):
 			scroll = QInputDialog.getItem(self, "Select Scroll", "Scroll:", list(urls.keys()), 0, False)[0]
 			self.scroll = scroll
 
-			downpath = QFileDialog.getExistingDirectory(self, "Select Directory to Download Images", os.getcwd())
+			#downpath = QFileDialog.getExistingDirectory(self, "Select Directory to Download Images", os.getcwd())
+			downpath = os.path.join(os.getcwd(), "tempDown")
 			downpathCubes = os.path.join(downpath, scroll+"_cubeDownloads")
 			downpathSmall = os.path.join(downpath, scroll+"_smallDownloads")
 			#check if downpath exists
@@ -168,7 +169,7 @@ class StartupDialog(QDialog):
 		layout.addWidget(QLabel("Select data source:"))
 
 		# Add radio buttons for data source options
-		self.stream_data = QRadioButton("Stream data (Disabled for now)")
+		self.stream_data = QRadioButton("Stream data (Semi-functional)")
 		#layout.addWidget(QLabel("Stream data disabled for now"))
 		self.local_data = QRadioButton("Load data from local directory")
 		layout.addWidget(self.stream_data)
