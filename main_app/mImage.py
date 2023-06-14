@@ -5,12 +5,13 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
 from .helpers import adjust_color
 class mImage(object):
-	def __init__(self, frame_count, img_loader, display_size=800):
+	def __init__(self, frame_count, img_loader, img_loader_small=None, display_size=800):
 		self.img_loader = img_loader
+		self.img_loader_small = img_loader_small
 		# N.B. this is z, x, y
 		self.shape = self.img_loader.shape
 		self.imshape = self.shape[1:]
-		
+		self.zoom_threshold = 0.1
 		self.loaded_shape = None
 		# This will hold the pixmap once loaded
 		self.img = None
@@ -89,8 +90,14 @@ class mImage(object):
 		x1 = int(self.imshape[0]*self.scale)
 		y1 = int(self.imshape[1]*self.scale)
 		self.loaded_shape = (x1, y1)
+		if (self.img_loader_small is not None) and self.scale > self.zoom_threshold:
+			img = self.img_loader_small[frame_index, x0//10:(x0+x1)//10, y0//10:(y0+y1)//10]
+		else:
+			print("img_loader called from here")
+			print(f"scale: {self.scale}, {self.img_loader_small}")
+			img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
 		#print("getImg",frame_index, x0, x1, y0, y1)
-		img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
+		# img = self.img_loader[frame_index, x0:x0+x1, y0:y0+y1]
 		img = cv2.resize(img, (self.display_height, self.display_width))
 		img = self.normalize_image(img=img)
 

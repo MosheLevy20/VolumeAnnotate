@@ -8,4 +8,3 @@ requests
 beautifulsoup4
 scipy
 trimesh
-

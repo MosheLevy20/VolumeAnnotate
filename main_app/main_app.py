@@ -18,21 +18,38 @@ class App(QWidget):
 		self.sessionId0 = sessionId0
 
 		t0 = time.time()
+		self.loaderSmall = None
 		if STREAM:
-			urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/", 
+			urls = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_masked/20230205180739/",
 			"scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_masked/20230210143520/",
 			}
-			urlsSmall = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_small/20230205180739/",
-						 "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_small/20230210143520/",}
+			urlsSmall = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volumes_small/20230205180739/"}
+			#			 "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volumes_small/20230210143520/",}
+			# urlsCubes = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volume_grids/20230205180739/",
+			# 			 "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volume_grids/20230210143520/",}
+			
+			urlsCubes = {"scroll1":"http://dl.ash2txt.org/full-scrolls/Scroll1.volpkg/volume_tiles/20230205180739/"}
+			#			 "scroll2":"http://dl.ash2txt.org/full-scrolls/Scroll2.volpkg/volume_grids/20230210143520/",}
 
 			username = "registeredusers"
 			password = "only"
+			#dialog box select scroll1 or scroll2
+			scroll = QInputDialog.getItem(self, "Select Scroll", "Scroll:", list(urls.keys()), 0, False)[0]
 			self.scroll = scroll
-			downpath = os.path.join(downpath, scroll+"_downloads")
+
+			downpath = QFileDialog.getExistingDirectory(self, "Select Directory to Download Images", os.getcwd())
+			downpathCubes = os.path.join(downpath, scroll+"_cubeDownloads")
+			downpathSmall = os.path.join(downpath, scroll+"_smallDownloads")
 			#check if downpath exists
-			if not os.path.exists(downpath):
-				os.makedirs(downpath)
-			img_array = RemoteZarr(urls[scroll], username, password, downpath, max_storage_gb=20)
+			if not os.path.exists(downpathCubes):
+				os.makedirs(downpathCubes)
+			if not os.path.exists(downpathSmall):
+				os.makedirs(downpathSmall)
+
+			img_array_cubes = RemoteZarr(urlsCubes[scroll], username, password, downpathCubes, chunk_type="cuboid", max_storage_gb=20)
+			img_array_small = RemoteZarr(urlsSmall[scroll], username, password, downpathSmall, chunk_type="zstack", max_storage_gb=20)
+			self.loader = Loader(img_array_cubes, STREAM,chunk_type="cuboid", max_mem_gb=3)
+			self.loaderSmall = Loader(img_array_small, STREAM, chunk_type="zstack", max_mem_gb=3)
 		else:
 			print(folder)
 			if folder.endswith(".volpkg"):
@@ -47,17 +64,17 @@ class App(QWidget):
 				img_array, tiffs = load_tif(folder)
 				self.tiffs = [folder + "/" + t for t in tiffs]
 			print(f"img_array: {img_array.shape}")
-		self.loader = Loader(img_array, STREAM, max_mem_gb=8)
+			self.loader = Loader(img_array, STREAM, max_mem_gb=8)
 		
 
 		self._frame_index = 0
 		if STREAM:
-			self._frame_count = img_array.file_list.shape[0]
+			self._frame_count = img_array_small.file_list.shape[0]
 		else:
 			self._frame_count = img_array.shape[0]
 		# add text for frame number, non editable
 		print("Initializing image")
-		self.image = mImage(self._frame_count, self.loader)
+		self.image = mImage(self._frame_count, self.loader, self.loaderSmall)
 		pmap = self.image.getImg(0)
 		self.label = ImageLabel(pmap, self)
 		print(self.loader.shape, "Lshape")
@@ -151,10 +168,10 @@ class StartupDialog(QDialog):
 		layout.addWidget(QLabel("Select data source:"))
 
 		# Add radio buttons for data source options
-		#self.stream_data = QRadioButton("Stream data (Disabled for now)")
-		layout.addWidget(QLabel("Stream data disabled for now"))
+		self.stream_data = QRadioButton("Stream data (Disabled for now)")
+		#layout.addWidget(QLabel("Stream data disabled for now"))
 		self.local_data = QRadioButton("Load data from local directory")
-		#layout.addWidget(self.stream_data)
+		layout.addWidget(self.stream_data)
 		layout.addWidget(self.local_data)
 
 		# Add a button to browse for a local directory (disabled by default)
@@ -182,7 +199,7 @@ class StartupDialog(QDialog):
 		layout.addWidget(launch_button)
 
 		# Connect signals and slots
-		#self.stream_data.toggled.connect(self.update_browse_button)
+		self.stream_data.toggled.connect(self.update_browse_button)
 		self.browse_button.clicked.connect(self.browse_for_directory)
 		launch_button.clicked.connect(self.launch_app)
 
@@ -208,8 +225,8 @@ class StartupDialog(QDialog):
 
 	def launch_app(self):
 		self.accept()
-
-		win = App(STREAM=False, folder=self.directory_path.text(), mode=self.modeSelect.currentText())
+		print(f"stream: {self.stream_data.isChecked()}")
+		win = App(STREAM=self.stream_data.isChecked(), folder=self.directory_path.text(), mode=self.modeSelect.currentText(), downpath="downTemp")
 		print("App initialized")
 
 def run():
