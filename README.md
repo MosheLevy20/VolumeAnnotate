@@ -27,7 +27,7 @@ If you select streaming you will be prompted to choose scroll 1 or 2 (currently 
 Additionally, there is a "mode" menu where you can select which segmentation algorithm to use (currently only "classic" is supported, but the code is set up in such a way to make it easy to add new modes).
 
 Once you launch you should see a window that looks something like this.
-![layout](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/layout.png)
+![layout](https://github.com/MosheLevy20/VolumeAnnotate/blob/main/Images/Layout.png)
 
 
 ### Basic Controls
