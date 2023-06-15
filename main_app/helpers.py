@@ -217,8 +217,11 @@ def getPixelCoords(imShape, x, y):
 def autoSave(app, file_name=None):
 	if file_name == None:
 		file_name = app.sessionId
+	if not os.path.exists(os.path.join(os.getcwd(), "saves")):
+		os.mkdir(os.path.join(os.getcwd(), "saves"))
+	saves = os.path.join(os.getcwd(), "saves", file_name)
 	#save annotations to file
-	with open(f"{file_name}", 'wb') as f:
+	with open(f"{saves}", 'wb') as f:
 		pickle.dump(app.image.annotations, f)
 		pickle.dump(app.image.interpolated, f)
 		pickle.dump(app.image.imshape, f)
