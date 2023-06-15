@@ -103,8 +103,8 @@ def addItems(app):
     # annotation radius slider
     app.slider_annotation_radius = QSlider(Qt.Horizontal, app)
     app.slider_annotation_radius.setMinimum(0)
-    app.slider_annotation_radius.setMaximum(30)
-    app.slider_annotation_radius.setValue(5)
+    app.slider_annotation_radius.setMaximum(6)
+    app.slider_annotation_radius.setValue(3)
     # change annotation radius when slider is changed
     app.slider_annotation_radius.valueChanged.connect(
         app.EH.on_slider_annotation_radius_change

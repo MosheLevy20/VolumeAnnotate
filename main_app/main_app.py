@@ -172,7 +172,7 @@ class StartupDialog(QDialog):
 		# Add radio buttons for data source options
 		self.stream_data = QRadioButton("Stream data (Semi-functional)")
 		#layout.addWidget(QLabel("Stream data disabled for now"))
-		self.local_data = QRadioButton("Load data from local directory")
+		self.local_data = QRadioButton("Load data")
 		layout.addWidget(self.stream_data)
 		layout.addWidget(self.local_data)
 
