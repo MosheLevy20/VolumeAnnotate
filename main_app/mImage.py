@@ -11,7 +11,7 @@ class mImage(object):
 		# N.B. this is z, x, y
 		self.shape = self.img_loader.shape
 		self.imshape = self.shape[1:]
-		self.zoom_threshold = 0.1
+		self.zoom_threshold = 0.11
 		self.loaded_shape = None
 		# This will hold the pixmap once loaded
 		self.img = None

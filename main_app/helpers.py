@@ -63,6 +63,8 @@ class Point(object):
 		x0, y0 = offset
 		if node:
 			size *= 2
+		else:
+			size = 1
 		#draws point to copy of the current frame
 		local_x = int(self.x * img_shape[1]) - y0 
 		local_y = int(self.y * img_shape[0]) - x0
