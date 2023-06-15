@@ -171,7 +171,10 @@ class RemoteZarr:
 		print(f"initial key: {key}")
 		key = self._get_store_index(key)
 		print(f"final key: {key}")
-		data = self.store[*key]
+		if len(key) == 1:
+			data = self.store[key[0]]
+		else:
+			data = self.store[key[0], key[1], key[2]]
 		print(f"shape: {data.shape}")
 		print(f"store shape: {self.store.shape}")
 		#swap axes 0 and 2
