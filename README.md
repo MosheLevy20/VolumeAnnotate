@@ -40,7 +40,7 @@ Once you are happy with the outline, you can click "Edge Detection" which will a
 
 ### Exporting
 There are a few formats you can export to. First is volpkg. If you selected a volpkg on startup it will save a new path in the paths directory. If you selected a regular directory of tifs, you will be prompted to name your volpkg and the app will generate it for you. Important note: by creating a new volpkg all the tifs will be copied, so make sure you have space for it. Currently export to volpkg doesn't work while streaming. 
-The next most important export format is pkl. As you segment an autosave pkl file will be generated (yyyymmddhhmmss.pkl), so if the app crashes you can load that pkl back in and continue where you left off. You can also manually save pkl files. You can also export to OBJ and view at your segment in 3d with e.g. MeshLab.
+The next most important export format is pkl. As you segment an autosave pkl file will be generated (yyyymmddhhmmss.pkl), so if the app crashes you can load that pkl back in and continue where you left off. You can manually save pkl files as well. You can also export to OBJ and view your segment in 3d with e.g. MeshLab.
 
 Finally, you can use the "Save 2D Projection" button to virtually unwrap your annotations. There are two options here: "Annotations" just unwraps your annotations, while "Pure Projection" simply takes the pixel values of the points (including the interpolated ones) that you outlined, ignoring the color of your annotations. Below is an example of a virtual unwrapping of the campfire scroll using both options.
 
